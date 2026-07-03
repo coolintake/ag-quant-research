@@ -17,6 +17,8 @@ WTI crude.
 - Visualizes current-year weekly positioning against the historical 
   min/max range for the same calendar week, by commodity — highlighting 
   when speculative positioning is stretched relative to its seasonal norm.
+<img width="1312" height="597" alt="image" src="https://github.com/user-attachments/assets/26038880-96fc-46e0-9c32-c895c57ee180" />
+<img width="1785" height="736" alt="image" src="https://github.com/user-attachments/assets/59c25344-b6d8-4b36-aa56-f3ab8f6b782f" />
 
 ## Data source
 CFTC Disaggregated Commitment of Traders reports (public, cftc.gov).
