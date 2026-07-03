@@ -20,6 +20,7 @@ trade files.
 ## Data source
 Statistics Canada CIMT (Canadian International Merchandise Trade), Open 
 Government Portal.
+<img width="1512" height="1127" alt="image" src="https://github.com/user-attachments/assets/2adb4b8b-7a78-48d5-bb6d-460cd917ca9a" />
 
 ## Requirements
 `pandas`, `openpyxl`, `requests`
