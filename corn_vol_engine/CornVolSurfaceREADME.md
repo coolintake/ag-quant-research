@@ -76,8 +76,9 @@ python main.py
 
 For live mode, ensure TWS or IB Gateway is running with the API enabled on
 port 7496 before running.
-<img width="975" height="842" alt="image" src="https://github.com/user-attachments/assets/a287fa59-c4b0-4113-9ce4-a7098bf69fef" />
-<img width="975" height="900" alt="image" src="https://github.com/user-attachments/assets/dbe875d4-3952-440b-99d9-522c249283e3" />
+<img width="545" height="470" alt="image" src="https://github.com/user-attachments/assets/5bd7f027-4a58-479e-99dd-e39613c47254" />
+
+<img width="531" height="490" alt="image" src="https://github.com/user-attachments/assets/6fae88c6-2ef8-427f-8f31-99b4334eefc6" />
 
 ## A note on data quality (offline mode)
 
