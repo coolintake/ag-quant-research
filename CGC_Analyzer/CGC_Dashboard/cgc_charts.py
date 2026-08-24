@@ -22,6 +22,7 @@ multiselect instead.
 from __future__ import annotations
 
 import re
+import math
 from typing import Dict, List, Optional
 
 import numpy as np
@@ -132,6 +133,24 @@ def build_stacked_capacity_fig(df_stocks: pd.DataFrame, segment_type: str) -> go
     return fig
 
 
+def build_commercial_stocks_summary_table(df_summary: pd.DataFrame) -> pd.DataFrame:
+    """Display-ready formatting for the 'Commercial Stocks in Pipeline'
+    summary table: Segment | Stocks (KMT) | Capacity (KMT) | Utilization (%).
+    """
+    def _fmt_volume(v: float) -> str:
+        return f"{v:,.0f}" if pd.notna(v) else "N/A"
+
+    def _fmt_pct(v: float) -> str:
+        return f"{v:.1f}%" if pd.notna(v) else "N/A"
+
+    out = pd.DataFrame()
+    out["Segment"] = df_summary["segment"]
+    out["Stocks (KMT)"] = df_summary["stocks_ktonnes"].apply(_fmt_volume)
+    out["Capacity (KMT)"] = df_summary["capacity_ktonnes"].apply(_fmt_volume)
+    out["Utilization (%)"] = df_summary["pct_utilized"].apply(_fmt_pct)
+    return out
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # TAB 2 — Cumulative Outflow Pacing
 # ═══════════════════════════════════════════════════════════════════════════
@@ -215,9 +234,9 @@ def build_pacing_summary_table(df_summary: pd.DataFrame) -> pd.DataFrame:
 
     out = pd.DataFrame()
     out["Commodity"] = df_summary["commodity"]
-    out["YTD"] = df_summary["ytd_ktonnes"].apply(_fmt_volume)
-    out["Last Yr."] = df_summary["last_yr_ktonnes"].apply(_fmt_volume)
-    out["3-Yr Avg"] = df_summary["avg3yr_ktonnes"].apply(_fmt_volume)
+    out["YTD (KMT)"] = df_summary["ytd_ktonnes"].apply(_fmt_volume)
+    out["Last Yr. (KMT)"] = df_summary["last_yr_ktonnes"].apply(_fmt_volume)
+    out["3-Yr Avg (KMT)"] = df_summary["avg3yr_ktonnes"].apply(_fmt_volume)
     out["vs Last Yr. (%)"] = df_summary["vs_last_yr_pct"].apply(_fmt_pct)
     out["vs 3-Yr (%)"] = df_summary["vs_3yr_pct"].apply(_fmt_pct)
     return out
@@ -637,6 +656,48 @@ def _pacing_style_key(z: float) -> str:
     return f"{direction}_{magnitude}"
 
 
+def _z_to_percentile(z: float) -> float:
+    """Approximate percentile (0-100) a Z-score corresponds to under a
+    standard normal distribution, via the standard normal CDF -- used to
+    translate an abstract Z-score into an intuitive 'Nth percentile'
+    label for a reader without a statistics background. Uses `math.erf`
+    (stdlib) rather than adding a scipy dependency for one calculation.
+    """
+    return 0.5 * (1.0 + math.erf(abs(z) / math.sqrt(2))) * 100.0
+
+
+def _format_anomaly_label(z: float, ratio: float) -> str:
+    """Plain-language anomaly label -- e.g. '2.4x Normal Pace (99th
+    Percentile Anomaly)' instead of a bare '+6.00σ'. `ratio` is the
+    current week's outflow divided by its historical average (a simple,
+    intuitive multiplier); the percentile is derived from the Z-score
+    itself. The raw Z-score remains available in the "Underlying data"
+    expander for anyone who wants it -- this is a display-layer
+    translation, not a loss of the underlying number.
+    """
+    if pd.isna(z):
+        return "N/A"
+    percentile = _z_to_percentile(z)
+    pct_text = "99.9th+ Percentile" if percentile >= 99.9 else f"{percentile:.0f}th Percentile"
+    if pd.notna(ratio):
+        return f"{ratio:.1f}x Normal Pace ({pct_text} Anomaly)"
+    return f"{pct_text} Anomaly"
+
+
+def _format_anomaly_short_label(z: float, ratio: float) -> str:
+    """Compact version of `_format_anomaly_label` for the always-visible
+    per-bar text (the full '(Nth Percentile Anomaly)' qualifier is
+    reserved for hover, where space isn't constrained by 6 bars needing
+    their own label simultaneously).
+    """
+    if pd.isna(z):
+        return "N/A"
+    if pd.notna(ratio):
+        return f"{ratio:.1f}x Normal Pace"
+    percentile = _z_to_percentile(z)
+    return "99.9th+ %ile" if percentile >= 99.9 else f"{percentile:.0f}th %ile"
+
+
 def build_seasonal_pacing_fig(df_anomaly: pd.DataFrame, commodities: Optional[List[str]] = None) -> go.Figure:
     """Diverging horizontal bar chart of each commodity's current-week
     outflow pace, expressed as a Z-score against its historical average
@@ -675,10 +736,14 @@ def build_seasonal_pacing_fig(df_anomaly: pd.DataFrame, commodities: Optional[Li
         bg_colors.append(style["bg"])
         text_colors.append(style["text"])
         bold_flags.append(style["bold"])
+        ratio = (
+            row["current_outflow_ktonnes"] / row["hist_avg"]
+            if pd.notna(row["hist_avg"]) and row["hist_avg"] != 0 else float("nan")
+        )
         if pd.notna(row["z_score"]):
             hover_texts.append(
                 f"<b>{row['grain']}</b><br>"
-                f"Z-score: {row['z_score']:+.2f}σ<br>"
+                f"{_format_anomaly_label(row['z_score'], ratio)}<br>"
                 f"Current: {row['current_outflow_ktonnes']:,.1f} Kt<br>"
                 f"{row.get('hist_pool', '')}-yr avg: {row['hist_avg']:,.1f} Kt<br>"
                 f"Deviation: {row['anomaly_ktonnes']:+,.1f} Kt"
@@ -702,7 +767,11 @@ def build_seasonal_pacing_fig(df_anomaly: pd.DataFrame, commodities: Optional[Li
         z = row["z_score"]
         key = _pacing_style_key(z)
         style = _PACING_STYLE[key]
-        label = f"{z:+.2f}σ" if pd.notna(z) else "N/A"
+        ratio = (
+            row["current_outflow_ktonnes"] / row["hist_avg"]
+            if pd.notna(row["hist_avg"]) and row["hist_avg"] != 0 else float("nan")
+        )
+        label = _format_anomaly_short_label(z, ratio)
         text = f"<b>{label}</b>" if style["bold"] else label
         x_pos = z if pd.notna(z) else 0.0
         offset = 0.08 * max(abs(df["z_score"].fillna(0)).max(), 1.0)
@@ -730,5 +799,171 @@ def build_seasonal_pacing_fig(df_anomaly: pd.DataFrame, commodities: Optional[Li
         height=max(320, 80 + 45 * len(df)),
         showlegend=False,
         margin=dict(l=140, r=60, t=60, b=60),
+    )
+    return fig
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TAB — Producer Deliveries
+# ═══════════════════════════════════════════════════════════════════════════
+
+_DELIVERY_MAIN_STREAMS: List[str] = ["Western Canada", "Process (National)", "Total Producer Deliveries"]
+_DELIVERY_PROVINCES: List[str] = ["SK", "AB", "MB", "BC"]
+
+# Display-only rename -- the facade's internal region key stays "Western
+# Canada" (used for lookups, e.g. the Calculator), only the LABEL shown
+# in these tables gets the "(Primary)" qualifier per the spec.
+_DELIVERY_REGION_DISPLAY_LABELS: Dict[str, str] = {"Western Canada": "Western Canada (Primary)"}
+
+
+def _format_delivery_table(
+    df_summary: pd.DataFrame, regions: List[str],
+    volume_col: str, volume_label: str, yoy_col: str, avg3yr_col: str,
+) -> pd.DataFrame:
+    """Shared formatter for all 4 Producer Deliveries display tables
+    (weekly/YTD x main-streams/provincial) -- same 'Region / Stream' +
+    volume + YoY + 3Y Avg Delta column shape, just pointed at different
+    source columns and a different region subset, so the four variants
+    can never format inconsistently with each other.
+    """
+    def _fmt_volume(v: float) -> str:
+        return f"{v:,.0f}" if pd.notna(v) else "N/A"
+
+    def _fmt_pct(v: float) -> str:
+        return f"{v:+.1f}%" if pd.notna(v) else "N/A"
+
+    sub = df_summary.set_index("region").reindex(regions)
+    out = pd.DataFrame()
+    out["Region / Stream"] = [_DELIVERY_REGION_DISPLAY_LABELS.get(r, r) for r in regions]
+    out[volume_label] = sub[volume_col].apply(_fmt_volume).values
+    out["YoY Change (%)"] = sub[yoy_col].apply(_fmt_pct).values
+    out["3Y Avg Delta (%)"] = sub[avg3yr_col].apply(_fmt_pct).values
+    return out
+
+
+def build_weekly_deliveries_table(df_summary: pd.DataFrame) -> pd.DataFrame:
+    """Table 1 (main rows): Western Canada (Primary) / Process (National) /
+    Total Producer Deliveries, current-week volume and its own weekly-basis
+    YoY / 3-Yr Avg comparisons (this week vs. the SAME WEEK last year /
+    3-yr average -- not the cumulative YTD comparison Table 2 uses).
+    """
+    return _format_delivery_table(
+        df_summary, _DELIVERY_MAIN_STREAMS,
+        "current_week_ktonnes", "Volume (KMT)", "week_yoy_pct", "week_avg3yr_delta_pct",
+    )
+
+
+def build_weekly_provincial_table(df_summary: pd.DataFrame) -> pd.DataFrame:
+    """Table 1's provincial breakdown (SK/AB/MB/BC), same weekly-basis
+    columns as `build_weekly_deliveries_table` -- shown inside the
+    'Show Weekly Provincial Breakdown' expander.
+    """
+    return _format_delivery_table(
+        df_summary, _DELIVERY_PROVINCES,
+        "current_week_ktonnes", "Volume (KMT)", "week_yoy_pct", "week_avg3yr_delta_pct",
+    )
+
+
+def build_ytd_deliveries_table(df_summary: pd.DataFrame) -> pd.DataFrame:
+    """Table 2 (main rows): Western Canada (Primary) / Process (National) /
+    Total Producer Deliveries, cumulative YTD volume and its own
+    YTD-basis YoY / 3-Yr Avg comparisons (YTD vs. YTD-at-the-same-week
+    last year / 3-yr average -- not the weekly comparison Table 1 uses).
+    """
+    return _format_delivery_table(
+        df_summary, _DELIVERY_MAIN_STREAMS,
+        "ytd_ktonnes", "YTD (KMT)", "ytd_yoy_pct", "ytd_avg3yr_delta_pct",
+    )
+
+
+def build_ytd_provincial_table(df_summary: pd.DataFrame) -> pd.DataFrame:
+    """Table 2's provincial breakdown (SK/AB/MB/BC), same YTD-basis
+    columns as `build_ytd_deliveries_table` -- shown inside the
+    'Show YTD Provincial Breakdown' expander.
+    """
+    return _format_delivery_table(
+        df_summary, _DELIVERY_PROVINCES,
+        "ytd_ktonnes", "YTD (KMT)", "ytd_yoy_pct", "ytd_avg3yr_delta_pct",
+    )
+
+
+def build_producer_deliveries_pacing_fig(df_pacing: pd.DataFrame, subtitle: str = "Total Producer Deliveries") -> go.Figure:
+    """Cumulative Producer Deliveries (KMT) across the crop year: current
+    crop year (solid, bold), the single most-recent prior crop year (its
+    own dashed line -- not blended into the historical envelope), and the
+    lookback-year historical average (dotted) with a shaded min/max
+    envelope. Styling matches `build_cumulative_pacing_fig`'s established
+    conventions (same envelope fill, same current-year color/width) so
+    the two pacing charts read as one consistent visual language.
+
+    Parameters
+    ----------
+    df_pacing : pd.DataFrame
+        Output of `CGCAnalytics.get_producer_deliveries_pacing()`.
+    subtitle : str
+        Optional extra context for the title (e.g. the active province
+        filter), appended after an em dash.
+    """
+    fig = go.Figure()
+    title = "Cumulative Producer Deliveries (KMT)"
+    if subtitle:
+        title = f"{title} — {subtitle}"
+
+    if df_pacing.empty:
+        fig.update_layout(
+            title=f"{title} (no data available)",
+            xaxis=dict(title="Crop Week", range=[1, 52]),
+            yaxis=dict(title="Cumulative Deliveries (KMT)"),
+            template="plotly_white",
+        )
+        return fig
+
+    weeks = df_pacing["grain_week"]
+
+    # Shaded 3-year historical min/max envelope -- identical convention to
+    # build_cumulative_pacing_fig (draw max invisibly, then min with
+    # fill='tonexty' to shade the area between the two).
+    fig.add_trace(go.Scatter(
+        x=weeks, y=df_pacing["hist_max_ktonnes"], mode="lines",
+        line=dict(width=0), showlegend=False, hoverinfo="skip",
+    ))
+    fig.add_trace(go.Scatter(
+        x=weeks, y=df_pacing["hist_min_ktonnes"], mode="lines",
+        line=dict(width=0), fill="tonexty", fillcolor="rgba(180, 180, 180, 0.3)",
+        name="3-Yr Historical Range", hoverinfo="skip",
+    ))
+
+    # 3-Year Average -- dotted, per spec (distinct from the dashed line
+    # used for the single prior year, so the two aren't visually confused).
+    fig.add_trace(go.Scatter(
+        x=weeks, y=df_pacing["hist_avg_ktonnes"], mode="lines",
+        line=dict(color="gray", dash="dot", width=2), name="3-Yr Average",
+    ))
+
+    # Prior Crop Year -- its own dashed line, distinct from the blended
+    # historical envelope above.
+    if "prior_yr_cum_ktonnes" in df_pacing.columns and df_pacing["prior_yr_cum_ktonnes"].notna().any():
+        fig.add_trace(go.Scatter(
+            x=weeks, y=df_pacing["prior_yr_cum_ktonnes"], mode="lines",
+            line=dict(color="#4A6FA5", dash="dash", width=2), name="Prior Crop Year",
+        ))
+
+    # Current Crop Year -- same solid dark-red convention as the Outflow
+    # Pacing chart's current-year line, for a consistent visual language
+    # across both pacing tabs.
+    crop_year_label = df_pacing["crop_year"].iloc[0]
+    fig.add_trace(go.Scatter(
+        x=weeks, y=df_pacing["current_cum_ktonnes"], mode="lines+markers",
+        line=dict(color="#8B0000", width=1.5), marker=dict(size=4),
+        name=f"{crop_year_label} (Current)",
+    ))
+
+    fig.update_layout(
+        title=title,
+        xaxis=dict(title="Crop Week", range=[1, 52], dtick=4),
+        yaxis=dict(title="Cumulative Deliveries (KMT)"),
+        template="plotly_white",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        hovermode="x unified",
     )
     return fig

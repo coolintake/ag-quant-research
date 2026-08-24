@@ -17,7 +17,7 @@ from pathlib import Path
 import streamlit as st
 
 from cgc_reports import CGCAnalytics
-from tabs import tab_bottleneck_matrix, tab_outflow_pacing, tab_seasonal_pacing, tab_segment_capacity
+from tabs import tab_bottleneck_matrix, tab_outflow_pacing, tab_producer_deliveries, tab_seasonal_pacing, tab_segment_capacity
 
 # Self-locating paths: these always resolve relative to THIS file's folder,
 # regardless of where `streamlit run` is launched from. Put
@@ -65,8 +65,9 @@ latest_crop_year = analytics._resolve_crop_year(None)
 latest_grain_week = analytics._resolve_grain_week(latest_crop_year, None)
 st.caption(f"Latest data available: crop year **{latest_crop_year}**, grain week **{latest_grain_week}**")
 
-tab1, tab2, tab3, tab4 = st.tabs([
-    "Segment Capacity Matrix", "Cumulative Outflow Pacing", "Bottleneck Matrix", "Seasonal Pacing Anomaly",
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "Segment Capacity Matrix", "Cumulative Outflow Pacing", "Bottleneck Matrix",
+    "Seasonal Pacing Anomaly", "Producer Deliveries",
 ])
 
 with tab1:
@@ -80,3 +81,6 @@ with tab3:
 
 with tab4:
     tab_seasonal_pacing.render(analytics)
+
+with tab5:
+    tab_producer_deliveries.render(analytics)

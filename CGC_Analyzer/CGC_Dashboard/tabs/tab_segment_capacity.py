@@ -8,7 +8,7 @@ selectable by supply-chain segment and commodity subset.
 import streamlit as st
 
 from cgc_engine import CORE_COMMODITIES
-from cgc_charts import build_stacked_capacity_fig
+from cgc_charts import build_commercial_stocks_summary_table, build_stacked_capacity_fig
 from tabs._widgets import commodity_multiselect_with_quick_actions
 
 SEGMENT_OPTIONS = {
@@ -52,6 +52,14 @@ def render(analytics) -> None:
             "products, not just the selected commodities -- a commodity-specific breakdown "
             "isn't available for this segment."
         )
+
+    # -- Commercial Stocks in Pipeline: all 3 segments at once, independent
+    # of the Supply Chain Segment selector above (which only scopes the
+    # chart to one segment's node-level breakdown).
+    st.markdown("**Commercial Stocks in Pipeline**")
+    commercial_summary = analytics.get_commercial_stocks_summary(commodities=selected_commodities)
+    commercial_display = build_commercial_stocks_summary_table(commercial_summary)
+    st.dataframe(commercial_display, width="stretch", hide_index=True)
 
     with st.expander("Underlying data"):
         st.dataframe(df_stocks, width="stretch")

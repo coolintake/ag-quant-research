@@ -172,6 +172,20 @@ PRIMARY_PROVINCE_MAP: Dict[str, str] = {
 }
 PRIMARY_PROVINCE_ORDER: List[str] = ["AB", "SK", "MB", "BC/Peace", "Western Canada Total"]
 
+# Separate from PRIMARY_PROVINCE_MAP: Producer Deliveries uses plain
+# province codes (SK/AB/MB/BC), not the "BC/Peace" capacity-context label
+# -- that label was specific to the licensed-capacity workbook's Peace
+# River grouping, which has no bearing on a GSW stocks/flow metric like
+# deliveries. Confirmed against a live 2025-26 GSW export: worksheet==
+# 'Primary', metric=='Deliveries' region values are exactly the same 4
+# provinces as Primary stocks (Alberta/Saskatchewan/Manitoba/British
+# Columbia), so the underlying province set is identical -- only the
+# display label for BC differs between the two features.
+DELIVERY_PROVINCE_MAP: Dict[str, str] = {
+    "Alberta": "AB", "Saskatchewan": "SK", "Manitoba": "MB", "British Columbia": "BC",
+}
+DELIVERY_PROVINCE_ORDER: List[str] = ["SK", "AB", "MB", "BC"]
+
 # Process-elevator east/west grouping. CGC_Capacity.xlsb currently has no
 # Quebec 'Process' rows, but Quebec is still mapped to Eastern Process so
 # it's picked up automatically if/when that capacity is added or if GSW
@@ -781,6 +795,91 @@ def stocks_by_node(gsw_df: pd.DataFrame, segment_type: str) -> pd.DataFrame:
         out = pd.concat([out, total], ignore_index=True)
 
     return out
+
+
+def deliveries_by_province(gsw_df: pd.DataFrame) -> pd.DataFrame:
+    """Primary elevator producer deliveries by (grain, crop_year,
+    grain_week, node=province), as BOTH a direct weekly flow and the
+    cumulative year-to-date total.
+
+    Confirmed against a live 2025-26 GSW export: worksheet=='Primary',
+    metric=='Deliveries' has BOTH period=='Current Week' (the weekly flow
+    directly, not cumulative) AND period=='Crop Year' (the cumulative YTD
+    total, verified monotonically non-decreasing) published directly by
+    GSW. Unlike the Exports/Shipment Distribution outflow definition,
+    NO DIFFERENCING is needed here -- both figures already exist in the
+    source data, so none of `weekly_outflow`'s partial-season handling
+    applies. Region values are the same 4 provinces as Primary stocks
+    (Alberta/Saskatchewan/Manitoba/British Columbia), mapped via
+    DELIVERY_PROVINCE_MAP to plain SK/AB/MB/BC codes.
+
+    Returns columns: ['grain', 'crop_year', 'grain_week', 'node',
+    'weekly_delivery_ktonnes', 'cum_delivery_ktonnes'].
+    """
+    base = gsw_df[(gsw_df["worksheet"] == "Primary") & (gsw_df["metric"] == "Deliveries")].copy()
+    base = base[~base["grain"].str.contains(EXCLUDED_GRAIN_PATTERN, regex=True, na=False)]
+    base["node"] = base["region"].map(DELIVERY_PROVINCE_MAP)
+    base = base[base["node"].notna()]
+    base["grain"] = base["grain"].replace(RAW_TO_GRAIN_NAME)  # e.g. 'Amber Durum' -> 'Durum'
+
+    if base.empty:
+        logger.warning(
+            "deliveries_by_province() produced no rows -- the GSW feed's 'region' "
+            "column may not carry province-level detail for the Primary/Deliveries "
+            "worksheet in this dataset."
+        )
+        return pd.DataFrame(columns=["grain", "crop_year", "grain_week", "node",
+                                      "weekly_delivery_ktonnes", "cum_delivery_ktonnes"])
+
+    group_cols = ["grain", "crop_year", "grain_week", "node"]
+    weekly = (
+        base[base["period"] == "Current Week"]
+        .groupby(group_cols, as_index=False)["Ktonnes"].sum()
+        .rename(columns={"Ktonnes": "weekly_delivery_ktonnes"})
+    )
+    cum = (
+        base[base["period"] == "Crop Year"]
+        .groupby(group_cols, as_index=False)["Ktonnes"].sum()
+        .rename(columns={"Ktonnes": "cum_delivery_ktonnes"})
+    )
+    return pd.merge(weekly, cum, on=group_cols, how="outer")
+
+
+def process_deliveries_national(gsw_df: pd.DataFrame) -> pd.DataFrame:
+    """Process elevator producer deliveries (worksheet=='Process',
+    metric=='Producer Deliveries'), at NATIONAL level only.
+
+    Confirmed against live 2025-26 GSW data: this metric's `region` field
+    is entirely blank for every row -- unlike Primary elevator deliveries,
+    it cannot be broken down by province. Both period values ('Current
+    Week' and 'Crop Year') are published directly, same as
+    `deliveries_by_province`, so no differencing is needed here either.
+
+    Per CGC's own Explanatory Notes, Primary + Process deliveries together
+    represent "commercial" (licensed elevator) delivery volume, distinct
+    from Producer Car deliveries (explicitly documented as UNLICENSED
+    handlings) -- this is why Producer Cars are deliberately excluded from
+    the "Total Commercial Deliveries" reconciliation this feeds into.
+
+    Returns columns: ['grain', 'crop_year', 'grain_week',
+    'weekly_delivery_ktonnes', 'cum_delivery_ktonnes'].
+    """
+    base = gsw_df[(gsw_df["worksheet"] == "Process") & (gsw_df["metric"] == "Producer Deliveries")].copy()
+    base = base[~base["grain"].str.contains(EXCLUDED_GRAIN_PATTERN, regex=True, na=False)]
+    base["grain"] = base["grain"].replace(RAW_TO_GRAIN_NAME)
+
+    group_cols = ["grain", "crop_year", "grain_week"]
+    weekly = (
+        base[base["period"] == "Current Week"]
+        .groupby(group_cols, as_index=False)["Ktonnes"].sum()
+        .rename(columns={"Ktonnes": "weekly_delivery_ktonnes"})
+    )
+    cum = (
+        base[base["period"] == "Crop Year"]
+        .groupby(group_cols, as_index=False)["Ktonnes"].sum()
+        .rename(columns={"Ktonnes": "cum_delivery_ktonnes"})
+    )
+    return pd.merge(weekly, cum, on=group_cols, how="outer")
 
 
 def cumulative_pacing_table(
