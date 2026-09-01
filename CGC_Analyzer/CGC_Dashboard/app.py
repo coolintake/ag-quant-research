@@ -66,8 +66,8 @@ latest_grain_week = analytics._resolve_grain_week(latest_crop_year, None)
 st.caption(f"Latest data available: crop year **{latest_crop_year}**, grain week **{latest_grain_week}**")
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "Segment Capacity Matrix", "Cumulative Outflow Pacing", "Bottleneck Matrix",
-    "Seasonal Pacing Anomaly", "Producer Deliveries",
+    "Commercial Pipeline", "Export Pace", "Capacity Bottleneck",
+    "Export Distribution", "Producer Deliveries",
 ])
 
 with tab1:

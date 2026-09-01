@@ -678,7 +678,7 @@ def _format_anomaly_label(z: float, ratio: float) -> str:
     if pd.isna(z):
         return "N/A"
     percentile = _z_to_percentile(z)
-    pct_text = "99.9th+ Percentile" if percentile >= 99.9 else f"{percentile:.0f}th Percentile"
+    pct_text = "99.9th+ Percentile" if percentile >= 99.5 else f"{percentile:.0f}th Percentile"
     if pd.notna(ratio):
         return f"{ratio:.1f}x Normal Pace ({pct_text} Anomaly)"
     return f"{pct_text} Anomaly"
@@ -695,13 +695,14 @@ def _format_anomaly_short_label(z: float, ratio: float) -> str:
     if pd.notna(ratio):
         return f"{ratio:.1f}x Normal Pace"
     percentile = _z_to_percentile(z)
-    return "99.9th+ %ile" if percentile >= 99.9 else f"{percentile:.0f}th %ile"
+    return "99.9th+ %ile" if percentile >= 99.5 else f"{percentile:.0f}th %ile"
 
 
 def build_seasonal_pacing_fig(df_anomaly: pd.DataFrame, commodities: Optional[List[str]] = None) -> go.Figure:
-    """Diverging horizontal bar chart of each commodity's current-week
-    outflow pace, expressed as a Z-score against its historical average
-    (positive = running faster than history, negative = running slower).
+    """Diverging horizontal bar chart of each commodity's cumulative YTD
+    export pace, expressed as a Z-score against its historical YTD-at-
+    the-same-week average (positive = running faster than history,
+    negative = running slower).
 
     Sorted by Z-score value rather than CORE_COMMODITIES' canonical order
     -- a deliberate exception to the ordering convention used elsewhere in
@@ -714,7 +715,10 @@ def build_seasonal_pacing_fig(df_anomaly: pd.DataFrame, commodities: Optional[Li
         Output of `CGCAnalytics.get_seasonal_pacing_anomaly()` -- one row
         per commodity at the current (crop_year, grain_week) snapshot,
         with `z_score`, `anomaly_ktonnes`, `hist_avg`, and
-        `current_outflow_ktonnes` already computed.
+        `current_cum_ktonnes` (the PRIMARY, cumulative-YTD-basis metric)
+        already computed. `current_week_ktonnes` (the plain, non-cumulative
+        current-week volume) is a secondary figure included in hover only
+        -- it does not drive the bar position, ratio, or percentile.
     commodities : Optional[List[str]]
         Which commodities to include (default: CORE_COMMODITIES).
     """
@@ -722,7 +726,7 @@ def build_seasonal_pacing_fig(df_anomaly: pd.DataFrame, commodities: Optional[Li
 
     if df_anomaly.empty:
         fig = go.Figure()
-        fig.update_layout(title="Seasonal Pacing Anomaly (no data available)", template="plotly_white")
+        fig.update_layout(title="Cumulative YTD Export Pacing (no data available)", template="plotly_white")
         return fig
 
     df = df_anomaly[df_anomaly["grain"].isin(commodities)].copy()
@@ -737,15 +741,20 @@ def build_seasonal_pacing_fig(df_anomaly: pd.DataFrame, commodities: Optional[Li
         text_colors.append(style["text"])
         bold_flags.append(style["bold"])
         ratio = (
-            row["current_outflow_ktonnes"] / row["hist_avg"]
+            row["current_cum_ktonnes"] / row["hist_avg"]
             if pd.notna(row["hist_avg"]) and row["hist_avg"] != 0 else float("nan")
         )
         if pd.notna(row["z_score"]):
+            current_week_text = (
+                f"Current week: {row['current_week_ktonnes']:,.1f} Kt<br>"
+                if "current_week_ktonnes" in row and pd.notna(row["current_week_ktonnes"]) else ""
+            )
             hover_texts.append(
                 f"<b>{row['grain']}</b><br>"
                 f"{_format_anomaly_label(row['z_score'], ratio)}<br>"
-                f"Current: {row['current_outflow_ktonnes']:,.1f} Kt<br>"
-                f"{row.get('hist_pool', '')}-yr avg: {row['hist_avg']:,.1f} Kt<br>"
+                f"YTD cumulative: {row['current_cum_ktonnes']:,.1f} Kt<br>"
+                f"{current_week_text}"
+                f"{row.get('hist_pool', '')}-yr YTD avg: {row['hist_avg']:,.1f} Kt<br>"
                 f"Deviation: {row['anomaly_ktonnes']:+,.1f} Kt"
             )
         else:
@@ -768,7 +777,7 @@ def build_seasonal_pacing_fig(df_anomaly: pd.DataFrame, commodities: Optional[Li
         key = _pacing_style_key(z)
         style = _PACING_STYLE[key]
         ratio = (
-            row["current_outflow_ktonnes"] / row["hist_avg"]
+            row["current_cum_ktonnes"] / row["hist_avg"]
             if pd.notna(row["hist_avg"]) and row["hist_avg"] != 0 else float("nan")
         )
         label = _format_anomaly_short_label(z, ratio)
@@ -792,8 +801,8 @@ def build_seasonal_pacing_fig(df_anomaly: pd.DataFrame, commodities: Optional[Li
     max_abs_z = max(abs(z_display).max(), PACING_EXTREME_THRESHOLD) * 1.3
 
     fig.update_layout(
-        title="Seasonal Pacing Anomaly — Z-Score Divergence from Historical Pace",
-        xaxis=dict(title="Z-score (σ from historical average)", range=[-max_abs_z, max_abs_z], zeroline=False),
+        title="Cumulative YTD Export Pacing — Divergence from Historical Benchmark",
+        xaxis=dict(title="YTD Pacing Divergence (σ from historical average)", range=[-max_abs_z, max_abs_z], zeroline=False),
         yaxis=dict(title=""),
         template="plotly_white",
         height=max(320, 80 + 45 * len(df)),

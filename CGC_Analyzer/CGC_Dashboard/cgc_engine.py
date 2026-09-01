@@ -104,6 +104,14 @@ CROP_YEAR_SEASON_START_MONTH: int = 8
 # dynamic, just named so it's easy to find if the window is ever widened.
 EARLIEST_HISTORICAL_CROP_YEAR_START: int = 2021
 
+# Historical baseline for the Export Distribution (Seasonal Pacing
+# Anomaly) tab specifically -- deliberately a much longer window
+# (2018-19 through present) than EARLIEST_HISTORICAL_CROP_YEAR_START
+# above, which governs default GSW data ingestion. This is a separate,
+# named constant rather than reusing that one, since the two serve
+# different purposes and could reasonably diverge again later.
+SEASONAL_ANOMALY_BASELINE_START_YEAR: int = 2018
+
 
 def current_crop_year(today: Optional[date] = None) -> str:
     """The short 'YYYY-YY' crop year containing `today` (defaults to the
@@ -940,14 +948,17 @@ def cumulative_pacing_table(
 # SECTION 5 — SEASONAL ANOMALY & BOTTLENECK MATRIX
 # ═══════════════════════════════════════════════════════════════════════════
 
-def seasonal_anomaly(outflow_df: pd.DataFrame, lookback_years: int = 3) -> pd.DataFrame:
-    """Current outflow minus N-year historical average for the same
-    grain_week, plus a z-score, across every crop year present. Returns
-    one row per (grain, crop_year, grain_week) -- i.e. the full weekly
-    series, not just a single week.
+def _grain_week_anomaly(outflow_df: pd.DataFrame, value_col: str, lookback_years: int = 3) -> pd.DataFrame:
+    """Shared Z-score computation: current `value_col` minus N-year
+    historical average for the same grain_week, plus a z-score, across
+    every crop year present. Used by both `seasonal_anomaly()` (weekly
+    basis) and `seasonal_anomaly_cumulative()` (YTD-cumulative basis) so
+    the underlying statistical logic can't drift between the two --
+    everything except which column feeds it is identical.
 
-    Columns: ['grain','grain_week','crop_year','current_outflow_ktonnes',
-    'hist_avg','hist_std','anomaly_ktonnes','z_score','hist_pool'].
+    Returns one row per (grain, crop_year, grain_week), with columns
+    ['grain','grain_week','crop_year','current_value_ktonnes','hist_avg',
+    'hist_std','anomaly_ktonnes','z_score','hist_pool'].
     """
     all_years: List[str] = sorted(outflow_df["crop_year"].unique())
     results = []
@@ -957,11 +968,11 @@ def seasonal_anomaly(outflow_df: pd.DataFrame, lookback_years: int = 3) -> pd.Da
             continue
         hist = outflow_df[outflow_df["crop_year"].isin(hist_pool)]
         baseline = (
-            hist.groupby(["grain", "grain_week"])["weekly_outflow_ktonnes"]
+            hist.groupby(["grain", "grain_week"])[value_col]
             .agg(hist_avg="mean", hist_std="std").reset_index()
         )
-        cur = outflow_df[outflow_df["crop_year"] == yr][["grain", "grain_week", "weekly_outflow_ktonnes"]] \
-            .rename(columns={"weekly_outflow_ktonnes": "current_outflow_ktonnes"})
+        cur = outflow_df[outflow_df["crop_year"] == yr][["grain", "grain_week", value_col]] \
+            .rename(columns={value_col: "current_value_ktonnes"})
         merged = cur.merge(baseline, on=["grain", "grain_week"], how="left")
         merged["crop_year"] = yr
         merged["hist_pool"] = ", ".join(hist_pool)
@@ -969,14 +980,47 @@ def seasonal_anomaly(outflow_df: pd.DataFrame, lookback_years: int = 3) -> pd.Da
 
     if not results:
         return pd.DataFrame(columns=[
-            "grain", "grain_week", "crop_year", "current_outflow_ktonnes",
+            "grain", "grain_week", "crop_year", "current_value_ktonnes",
             "hist_avg", "hist_std", "anomaly_ktonnes", "z_score", "hist_pool",
         ])
 
     out = pd.concat(results, ignore_index=True)
-    out["anomaly_ktonnes"] = out["current_outflow_ktonnes"] - out["hist_avg"]
+    out["anomaly_ktonnes"] = out["current_value_ktonnes"] - out["hist_avg"]
     out["z_score"] = np.where(out["hist_std"] > 0, out["anomaly_ktonnes"] / out["hist_std"], np.nan)
     return out
+
+
+def seasonal_anomaly(outflow_df: pd.DataFrame, lookback_years: int = 3) -> pd.DataFrame:
+    """Current outflow minus N-year historical average for the same
+    grain_week, plus a z-score, across every crop year present. Returns
+    one row per (grain, crop_year, grain_week) -- i.e. the full weekly
+    series, not just a single week.
+
+    Columns: ['grain','grain_week','crop_year','current_outflow_ktonnes',
+    'hist_avg','hist_std','anomaly_ktonnes','z_score','hist_pool'].
+    """
+    out = _grain_week_anomaly(outflow_df, "weekly_outflow_ktonnes", lookback_years)
+    return out.rename(columns={"current_value_ktonnes": "current_outflow_ktonnes"})
+
+
+def seasonal_anomaly_cumulative(outflow_df: pd.DataFrame, lookback_years: int = 3) -> pd.DataFrame:
+    """Same Z-score logic as `seasonal_anomaly()`, but evaluated on
+    CUMULATIVE YTD outflow (`cum_ktonnes`) rather than the weekly
+    (non-cumulative) figure -- i.e. "is this crop year's cumulative
+    export program running ahead of or behind where it normally sits at
+    this same grain_week," not "was this one week unusually large."
+
+    `cum_ktonnes` comes straight from `OutflowDefinition.aggregate()`
+    (before `weekly_outflow()`'s differencing/partial-season NaN-guarding
+    is applied), so unlike the weekly-basis version, there's no
+    first-observed-week edge case to worry about here -- a cumulative
+    total is always well-defined at any given week.
+
+    Columns: ['grain','grain_week','crop_year','current_cum_ktonnes',
+    'hist_avg','hist_std','anomaly_ktonnes','z_score','hist_pool'].
+    """
+    out = _grain_week_anomaly(outflow_df, "cum_ktonnes", lookback_years)
+    return out.rename(columns={"current_value_ktonnes": "current_cum_ktonnes"})
 
 
 def bottleneck_matrix(

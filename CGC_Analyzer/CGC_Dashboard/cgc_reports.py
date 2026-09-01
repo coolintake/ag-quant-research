@@ -24,6 +24,8 @@ from cgc_engine import (
     CORE_COMMODITIES,
     DEFAULT_CROP_YEARS,
     DEFAULT_CURRENT_YEAR,
+    SEASONAL_ANOMALY_BASELINE_START_YEAR,
+    crop_year_start_int,
     DEFAULT_OUTFLOW_DEFINITION,
     DELIVERY_PROVINCE_ORDER,
     OutflowDefinition,
@@ -42,6 +44,7 @@ from cgc_engine import (
     effective_process_capacity_by_node,
     normalize_crop_year,
     seasonal_anomaly,
+    seasonal_anomaly_cumulative,
     stocks_by_node,
     stocks_slice,
     stocks_to_discharge_ratio,
@@ -478,19 +481,40 @@ class CGCAnalytics:
         return out.sort_values("crop_year").reset_index(drop=True)
 
     def get_seasonal_pacing_anomaly(
-        self, crop_year: Optional[str] = None, grain_week: Optional[int] = None, lookback_years: int = 3,
+        self, crop_year: Optional[str] = None, grain_week: Optional[int] = None, lookback_years: Optional[int] = None,
     ) -> pd.DataFrame:
-        """Current-week Z-score deviation from the `lookback_years`
-        historical pace, one row per commodity, for the diverging Seasonal
-        Pacing Anomaly chart. This is the SAME `seasonal_anomaly()` engine
-        math `get_historical_anomaly_tracker` already uses (year-over-year,
-        one commodity) -- just sliced the other way: every commodity, one
-        (crop_year, grain_week) snapshot. No new engine work.
+        """Cumulative YTD Z-score deviation from the historical pace, one
+        row per commodity, for the Export Distribution chart. PRIMARY
+        metric is CUMULATIVE outflow (Week 1 through the current week) --
+        "is this crop year's export program running ahead of or behind
+        normal," not "was this one week unusual." The plain current-week
+        (non-cumulative) volume is included as `current_week_ktonnes`, a
+        secondary/supporting figure -- it does NOT drive the z-score,
+        ratio, or percentile.
+
+        `lookback_years=None` (the default) spans the full historical
+        baseline from `SEASONAL_ANOMALY_BASELINE_START_YEAR` (2018-19)
+        through the crop year immediately before the resolved current one
+        -- e.g. if the current crop year is 2025-26, this covers 2018-19
+        through 2024-25 (7 years), not a fixed 3-year window. The
+        underlying `hist_pool` slicing already clamps gracefully if fewer
+        years are actually present in the loaded data, so passing a
+        deliberately large number here is safe even for a freshly-loaded,
+        short-history dataset.
         """
         crop_year = self._resolve_crop_year(crop_year)
         grain_week = self._resolve_grain_week(crop_year, grain_week)
-        anomaly = seasonal_anomaly(self.outflow, lookback_years=lookback_years)
-        out = anomaly[(anomaly["crop_year"] == crop_year) & (anomaly["grain_week"] == grain_week)].copy()
+        if lookback_years is None:
+            lookback_years = max(0, crop_year_start_int(crop_year) - SEASONAL_ANOMALY_BASELINE_START_YEAR)
+
+        ytd_anomaly = seasonal_anomaly_cumulative(self.outflow, lookback_years=lookback_years)
+        out = ytd_anomaly[(ytd_anomaly["crop_year"] == crop_year) & (ytd_anomaly["grain_week"] == grain_week)].copy()
+
+        weekly = self.outflow[
+            (self.outflow["crop_year"] == crop_year) & (self.outflow["grain_week"] == grain_week)
+        ][["grain", "weekly_outflow_ktonnes"]].rename(columns={"weekly_outflow_ktonnes": "current_week_ktonnes"})
+        out = out.merge(weekly, on="grain", how="left")
+
         out["grain"] = out["grain"].apply(to_display_grain_name)
         return out.sort_values("z_score").reset_index(drop=True)
 
