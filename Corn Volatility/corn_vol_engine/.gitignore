@@ -1,0 +1,11 @@
+# Byte-compiled files
+__pycache__/
+*.pyc
+
+# Local market data snapshots (do not commit real pulls)
+market_data/*
+!market_data/.gitkeep
+
+# Environment
+.env
+venv/
