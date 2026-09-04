@@ -1,0 +1,37 @@
+name: Weekly CGC Data Update
+
+on:
+  schedule:
+    # 11:00 UTC = 7:00 AM EDT (Wed = 3, Thu = 4, Fri = 5)
+    - cron: '0 11 * * 3,4,5'
+  workflow_dispatch: # Enables manual trigger from the GitHub Actions tab
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r CGC_Analyzer/requirements.txt
+
+      - name: Run Data Ingestion
+        run: |
+          python CGC_Analyzer/run_report.py
+
+      - name: Commit and Push Updated Data
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action Bot"
+          git add CGC_Analyzer/gsw_data/
+          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-update CGC weekly data [skip ci]"
+          git push
