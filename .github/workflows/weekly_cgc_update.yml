@@ -40,14 +40,24 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action Bot"
+
           git add CGC_Analyzer/gsw_data/
-          
-          if ! git diff --cached --quiet; then
-            echo "Changes detected. Committing and pushing..."
-            git commit -m "Auto-update CGC weekly data [skip ci]"
-            git fetch origin main
-            git rebase origin/main
-            git push origin main
-          else
+
+          if git diff --cached --quiet; then
             echo "No data changes detected. Skipping commit and push."
+            exit 0
           fi
+
+          echo "Changes detected. Committing..."
+          git commit -m "Auto-update CGC weekly data [skip ci]"
+
+          # Make sure we are up to date with remote before pushing
+          git fetch origin main
+
+          if ! git rebase origin/main; then
+            echo "Rebase failed – falling back to merge"
+            git rebase --abort || true
+            git merge --no-edit origin/main
+          fi
+
+          git push origin main
