@@ -6,13 +6,38 @@ on:
     - cron: '0 11 * * 3,4,5'
   workflow_dispatch: # Enables manual trigger from the GitHub Actions tab
 
+# Queues (does NOT cancel) overlapping runs of this workflow -- if a second
+# trigger arrives while one is still running, it waits for the first to
+# finish and push before starting its own fresh checkout. This is the
+# actual root cause of last run's failure: the repeated manual
+# workflow_dispatch triggers during testing this week almost certainly
+# overlapped, so the second run's local branch was already behind the
+# first run's push by the time it tried to push its own commit.
+concurrency:
+  group: weekly-cgc-update
+  cancel-in-progress: false
+
 jobs:
   update-data:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # without this, the auto-generated GITHUB_TOKEN is
+                        # read-only on most repos by default -- checkout,
+                        # the script, and even a LOCAL commit all succeed
+                        # regardless, but `git push` at the end fails with
+                        # a 403 ("Permission ... denied to github-actions[bot]")
+                        # since pushing is the one step that actually needs
+                        # write access to the remote.
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history, not the default shallow (1-commit)
+                           # clone -- `git pull --rebase` below needs a real
+                           # common ancestor with origin/main to rebase
+                           # cleanly; a shallow clone can occasionally choke
+                           # on that if the remote has moved forward.
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -34,4 +59,5 @@ jobs:
           git config --local user.name "GitHub Action Bot"
           git add CGC_Analyzer/gsw_data/
           git diff --quiet && git diff --staged --quiet || git commit -m "Auto-update CGC weekly data [skip ci]"
+          git pull --rebase origin main
           git push

@@ -154,7 +154,7 @@ MIN_MATERIAL_STOCKS_KTONNES: float = 0.0  # opt-in floor; 0 = disabled
 
 # The 6 core commodities tracked on the dashboard. Fixed set -- never add
 # or infer additional commodities here.
-CORE_COMMODITIES: List[str] = ["Wheat", "Durum", "Canola", "Soybeans", "Barley", "Oats"]
+CORE_COMMODITIES: List[str] = ["Wheat", "Durum", "Canola", "Soybeans", "Barley", "Oats", "Peas", "Lentils"]
 
 COMMODITY_COLORS: Dict[str, str] = {
     "Wheat":    "#E69F00",
@@ -163,6 +163,12 @@ COMMODITY_COLORS: Dict[str, str] = {
     "Soybeans": "#009E73",
     "Barley":   "#56B4E9",
     "Oats":     "#CC79A7",
+    # Okabe-Ito's remaining 2 colors (of its standard 8), completing the
+    # same colorblind-safe palette the 6 above already draw from, rather
+    # than introducing arbitrary new hues that would break its
+    # distinguishability guarantee for 8 categories at once.
+    "Peas":     "#0072B2",
+    "Lentils":  "#000000",
 }
 
 # Primary-elevator province grouping. Ground truth (CGC_Capacity.xlsb):
@@ -230,7 +236,7 @@ UNREPORTED_NODES: Dict[str, set] = {
 # dashboard. Confirmed against a live 2025-26 GSW export: durum is always
 # reported as 'Amber Durum', never plain 'Durum'.
 GRAIN_NAME_TO_RAW: Dict[str, str] = {
-    "Durum": "Amber Durum",
+    "Amber Durum": "Amber Durum",
 }
 RAW_TO_GRAIN_NAME: Dict[str, str] = {v: k for k, v in GRAIN_NAME_TO_RAW.items()}
 

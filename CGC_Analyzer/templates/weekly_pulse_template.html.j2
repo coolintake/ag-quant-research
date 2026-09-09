@@ -1,0 +1,245 @@
+{# ══════════════════════════════════════════════════════════════════════
+   Canadian Grain Handling Weekly (internal pipeline nickname: Weekly Pulse)
+   NOTE: Styles are inline (not in a <style> block) on purpose — Ghost
+   strips <style> tags when a post is converted to a newsletter email,
+   so inline styles are the only reliable way to keep formatting there
+   and on the web post itself.
+   ══════════════════════════════════════════════════════════════════════ #}
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; color:#1a1a1a; max-width:720px; margin:0 auto; line-height:1.5;">
+
+  {# ── MASTHEAD ─────────────────────────────────────────────────────── #}
+  <div style="background:#0F2438; padding:20px 24px; border-radius:6px 6px 0 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:4px;">
+      <tr>
+        <td align="left" style="color:#8FA6BF; font-size:11px; letter-spacing:1.5px; font-weight:600; text-transform:uppercase;">
+          The Desk
+        </td>
+        <td align="right" style="color:#8FA6BF; font-size:11px; letter-spacing:1.5px; font-weight:600; text-transform:uppercase;">
+          Chilmeran Research
+        </td>
+      </tr>
+    </table>
+    <div style="color:#FFFFFF; font-size:19px; font-weight:700; letter-spacing:0.3px;">
+      {{ publication_title }}
+      <span style="color:#8FA6BF; font-weight:500;">[{{ week_label }} | {{ crop_year_label }}]</span>
+    </div>
+  </div>
+
+  {# ── SECTION 1: MACRO SNAPSHOT ────────────────────────────────────── #}
+  <div style="background:#F5F7FA; border:1px solid #E1E6EB; border-top:none; padding:20px 24px;">
+    <div style="font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#0F2438; margin-bottom:14px;">
+      Macro Snapshot
+    </div>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px;">
+      <!-- Primary Deliveries — Weekly -->
+      <tr>
+        <td style="padding:0 0 8px 0; border-bottom:1px solid #E1E6EB; font-size:13px; color:#4A5A68;">Primary Deliveries — Weekly</td>
+        <td align="right" style="padding:8px 0; border-bottom:1px solid #E1E6EB; font-size:14px; font-weight:700; color:#0F2438;">
+          {{ macro.weekly_deliveries_kt | kt }} KMT
+          <span style="font-weight:500; font-size:12px; color:{{ '#1a7f37' if (macro.deliveries_wow_pct or 0) >= 0 else '#c0392b' }};">
+            ({{ macro.deliveries_wow_pct | pct }} WoW)
+          </span>
+        </td>
+      </tr>
+        <!-- Primary Deliveries — Weekly -->
+        <tr>
+        <td style="padding:0 0 8px 0; border-bottom:1px solid #E1E6EB; font-size:13px; color:#4A5A68;">
+            Primary Deliveries — Weekly
+        </td>
+        <td align="right" style="padding:0 0 8px 0; border-bottom:1px solid #E1E6EB; font-size:14px; font-weight:700; color:#0F2438;">
+            {{ macro.weekly_deliveries_kt | kt }} KMT
+            <span style="font-weight:500; font-size:12px; color:{{ '#1a7f37' if (macro.deliveries_wow_pct or 0) >= 0 else '#c0392b' }};">
+            ({{ macro.deliveries_wow_pct | pct }} WoW)
+            </span>
+        </td>
+        </tr>
+      <!-- Terminal Outflow (Weekly Movement) Header -->
+      <tr>
+        <td style="padding:10px 0 6px 0; font-size:13px; font-weight:700; color:#0F2438;">
+          Terminal Outflow (Weekly Exports)
+        </td>
+        <td align="right" style="padding:10px 0 6px 0; font-size:14px; font-weight:700; color:#0F2438;">
+          {{ macro.terminal_outflow_total_kt | kt }} KMT
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 0 8px 16px; border-bottom:1px solid #E1E6EB; font-size:12.5px; color:#6B7A87;">
+          West Coast (Van + PR)
+        </td>
+        <td align="right" style="padding:4px 0 8px 0; border-bottom:1px solid #E1E6EB; font-size:13px; color:#2A3742;">
+          {{ macro.west_coast_kt | kt }} KMT
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 0 10px 16px; border-bottom:1px solid #E1E6EB; font-size:12.5px; color:#6B7A87;">
+          East / Interior
+        </td>
+        <td align="right" style="padding:4px 0 10px 0; border-bottom:1px solid #E1E6EB; font-size:13px; color:#2A3742;">
+          {{ macro.east_interior_kt | kt }} KMT
+        </td>
+      </tr>
+
+      <!-- Terminal Storage Occupancy Header -->
+      <tr>
+        <td colspan="2" style="padding:10px 0 6px 0; font-size:13px; font-weight:700; color:#0F2438;">
+          Terminal Bin Storage Occupancy
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 0 6px 16px; border-bottom:1px solid #E1E6EB; font-size:12.5px; color:#6B7A87;">
+          West Coast Storage
+        </td>
+        <td align="right" style="padding:4px 0 6px 0; border-bottom:1px solid #E1E6EB; font-size:13px; font-weight:600; color:#2A3742;">
+          {% if macro.west_coast_util_pct is not none %}
+            {{ "%.0f"|format(macro.west_coast_util_pct) }}% capacity in use
+          {% else %}
+            N/A
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 0 0 16px; font-size:12.5px; color:#6B7A87;">
+          East / Interior Storage
+        </td>
+        <td align="right" style="padding:4px 0 0 0; font-size:13px; font-weight:600; color:#2A3742;">
+          {% if macro.east_interior_util_pct is not none %}
+            {{ "%.0f"|format(macro.east_interior_util_pct) }}% capacity in use
+          {% else %}
+            N/A
+          {% endif %}
+        </td>
+      </tr>
+    </table>
+
+    <div style="background:#FFF7E6; border-left:3px solid #E0A100; padding:10px 14px; font-size:13px; color:#5A4400;">
+      <div style="font-weight:700; color:#1a1a1a; margin-bottom:4px;">Key Watch</div>
+      <div style="margin-bottom:{{ '4px' if key_watch_east else '0' }};">• {{ key_watch_west }}</div>
+      {% if key_watch_east %}
+      <div>• {{ key_watch_east }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── SECTION 2: COMMODITY FLOW & YTD ──────────────────────────────── #}
+  <div style="background:#FFFFFF; border:1px solid #E1E6EB; border-top:none; padding:20px 24px;">
+    <div style="font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#0F2438; margin-bottom:14px;">
+      Commodity Flow &amp; YTD
+    </div>
+
+    {# Table cells are strictly numerical -- every unit (KMT, MMT, % vs LY)
+       lives in this header/ribbon row, not in the data cells below. #}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:11.5px; border-collapse:collapse;">
+      <thead>
+        <tr style="background:#0F2438;">
+          <th align="left"   rowspan="2" style="padding:8px 6px; color:#FFFFFF; font-weight:600; vertical-align:bottom;">Commodity</th>
+          <th align="right"  rowspan="2" style="padding:8px 6px; color:#FFFFFF; font-weight:600; vertical-align:bottom;">Deliv.<br>(KMT wk)</th>
+          <th align="right"  rowspan="2" style="padding:8px 6px; color:#FFFFFF; font-weight:600; vertical-align:bottom;">Exports<br>(KMT wk)</th>
+          <th align="center" colspan="2" style="padding:6px; color:#FFFFFF; font-weight:600; border-bottom:1px solid #2A3E52;">Deliv. YTD</th>
+          <th align="center" colspan="2" style="padding:6px; color:#FFFFFF; font-weight:600; border-bottom:1px solid #2A3E52;">Exports YTD</th>
+          <th align="center" colspan="2" style="padding:6px; color:#FFFFFF; font-weight:600; border-bottom:1px solid #2A3E52;">Terminal Stocks</th>
+        </tr>
+        <tr style="background:#0F2438;">
+          <th align="right" style="padding:4px 6px 8px; color:#8FA6BF; font-weight:600;">Total<br>(MMT)</th>
+          <th align="right" style="padding:4px 6px 8px; color:#8FA6BF; font-weight:600;">% vs LY</th>
+          <th align="right" style="padding:4px 6px 8px; color:#8FA6BF; font-weight:600;">Total<br>(MMT)</th>
+          <th align="right" style="padding:4px 6px 8px; color:#8FA6BF; font-weight:600;">% vs LY</th>
+          <th align="right" style="padding:4px 6px 8px; color:#8FA6BF; font-weight:600;">Total<br>(KMT)</th>
+          <th align="right" style="padding:4px 6px 8px; color:#8FA6BF; font-weight:600;">% vs LY</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in commodities %}
+        <tr style="background:{{ '#F5F7FA' if loop.index0 % 2 == 0 else '#FFFFFF' }};">
+          <td style="padding:7px 6px; border-bottom:1px solid #E1E6EB; font-weight:600; color:#1a1a1a;">{{ c.display_name }}</td>
+          <td align="right" style="padding:7px 6px; border-bottom:1px solid #E1E6EB;">{{ c.weekly_deliveries_kt | kt }}</td>
+          <td align="right" style="padding:7px 6px; border-bottom:1px solid #E1E6EB;">{{ c.weekly_exports_kt | kt }}</td>
+          <td align="right" style="padding:7px 6px; border-bottom:1px solid #E1E6EB;">{{ c.ytd_deliveries_mmt | mmt }}</td>
+          <td align="right" style="padding:7px 6px; border-bottom:1px solid #E1E6EB; color:{{ '#1a7f37' if (c.deliveries_yoy_pct or 0) >= 0 else '#c0392b' }};">{{ c.deliveries_yoy_pct | pctnum }}</td>
+          <td align="right" style="padding:7px 6px; border-bottom:1px solid #E1E6EB;">{{ c.ytd_exports_mmt | mmt }}</td>
+          <td align="right" style="padding:7px 6px; border-bottom:1px solid #E1E6EB; color:{{ '#1a7f37' if (c.exports_yoy_pct or 0) >= 0 else '#c0392b' }};">{{ c.exports_yoy_pct | pctnum }}{% if is_early_season %}*{% endif %}</td>
+          <td align="right" style="padding:7px 6px; border-bottom:1px solid #E1E6EB;">{{ c.stocks_kt | kt }}</td>
+          <td align="right" style="padding:7px 6px; border-bottom:1px solid #E1E6EB; color:{{ '#1a7f37' if (c.stocks_yoy_pct or 0) >= 0 else '#c0392b' }};">{{ c.stocks_yoy_pct | pctnum }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if is_early_season %}
+    <div style="font-size:10.5px; color:#8A97A3; margin-top:6px; font-style:italic;">
+      * Early crop-year percentages can be volatile (weeks 1–10) due to low prior-year bases.
+    </div>
+    {% endif %}
+  </div>
+
+  {# ── SECTION 3: YTD EXPORTS BY CORRIDOR ───────────────────────────── #}
+  <div style="background:#F5F7FA; border:1px solid #E1E6EB; border-top:none; padding:20px 24px;">
+    <div style="font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#0F2438; margin-bottom:14px;">
+      YTD Exports by Corridor
+    </div>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:12px; border-collapse:collapse;">
+      <thead>
+        <tr style="background:#0F2438;">
+          <th align="left"  rowspan="2" style="padding:8px 6px; color:#FFFFFF; font-weight:600; vertical-align:bottom;">Commodity</th>
+          <th align="center" colspan="2" style="padding:6px; color:#FFFFFF; font-weight:600; border-bottom:1px solid #2A3E52;">West Coast (Van + PR)</th>
+          <th align="center" colspan="2" style="padding:6px; color:#FFFFFF; font-weight:600; border-bottom:1px solid #2A3E52;">East / Interior</th>
+        </tr>
+        <tr style="background:#0F2438;">
+          <th align="right" style="padding:4px 6px 8px; color:#8FA6BF; font-weight:600;">YTD Export</th>
+          <th align="right" style="padding:4px 6px 8px; color:#8FA6BF; font-weight:600;">vs LY</th>
+          <th align="right" style="padding:4px 6px 8px; color:#8FA6BF; font-weight:600;">YTD Export</th>
+          <th align="right" style="padding:4px 6px 8px; color:#8FA6BF; font-weight:600;">vs LY</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in commodities %}
+        <tr style="background:{{ '#FFFFFF' if loop.index0 % 2 == 0 else '#F5F7FA' }};">
+          <td style="padding:7px 6px; border-bottom:1px solid #E1E6EB; font-weight:600; color:#1a1a1a;">{{ c.display_name }}</td>
+          <td align="right" style="padding:7px 6px; border-bottom:1px solid #E1E6EB;">{{ c.west_export_ytd_kt | kt }}</td>
+          <td align="right" style="padding:7px 6px; border-bottom:1px solid #E1E6EB; color:{{ '#1a7f37' if (c.west_export_yoy_pct or 0) >= 0 else '#c0392b' }};">{{ c.west_export_yoy_pct | pct }}{% if is_early_season %}*{% endif %}</td>
+          <td align="right" style="padding:7px 6px; border-bottom:1px solid #E1E6EB;">{{ c.east_export_ytd_kt | kt }}</td>
+          <td align="right" style="padding:7px 6px; border-bottom:1px solid #E1E6EB; color:{{ '#1a7f37' if (c.east_export_yoy_pct or 0) >= 0 else '#c0392b' }};">{{ c.east_export_yoy_pct | pct }}{% if is_early_season %}*{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if is_early_season %}
+    <div style="font-size:10.5px; color:#8A97A3; margin-top:6px; font-style:italic;">
+      * Early crop-year percentages can be volatile (weeks 1–10) due to low prior-year bases.
+    </div>
+    {% endif %}
+    <div style="font-size:11px; color:#6B7A87; margin-top:10px;">
+      Note: Most primary deliveries remain Western. This table shows where the grain is actually leaving the country.
+    </div>
+  </div>
+
+  {# ── SECTION 4: SIGNAL HIGHLIGHTS ─────────────────────────────────── #}
+  <div style="background:#FFFFFF; border:1px solid #E1E6EB; border-top:none; padding:20px 24px;">
+    <div style="font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#0F2438; margin-bottom:8px;">
+      Signal Highlights
+    </div>
+    <ul style="margin:0; padding-left:18px; font-size:13.5px; color:#2A3742;">
+      {% for bullet in signal_highlights %}
+      <li style="margin-bottom:6px;">{{ bullet }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  {# ── SECTION 5: EXPORT PACING (chart + CTA) ───────────────────────── #}
+  <div style="background:#F5F7FA; border:1px solid #E1E6EB; border-top:none; padding:20px 24px;">
+    <div style="font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#0F2438; margin-bottom:14px;">
+      Export Pacing
+    </div>
+    <img src="{{ chart_url }}" alt="YTD export pacing by commodity: this year vs last year vs 5-year average"
+         style="width:100%; max-width:672px; height:auto; border-radius:4px; border:1px solid #E1E6EB;" />
+  </div>
+
+  {# ── FOOTER ────────────────────────────────────────────────────────── #}
+  <div style="background:#0F2438; padding:14px 24px; border-radius:0 0 6px 6px; text-align:center;">
+    <div style="color:#8FA6BF; font-size:11.5px;">
+      Chilmeran Research | Grain Market Intelligence |
+      <a href="https://{{ footer_url }}" style="color:#FFFFFF; font-weight:600; text-decoration:none;">{{ footer_url }}</a>
+    </div>
+  </div>
+
+</div>
