@@ -4,7 +4,7 @@ on:
   schedule:
     # 11:00 UTC = 7:00 AM EDT (Wed = 3, Thu = 4, Fri = 5)
     - cron: '0 11 * * 3,4,5'
-  workflow_dispatch: # Enables manual trigger from the GitHub Actions tab
+  workflow_dispatch:
 
 concurrency:
   group: weekly-cgc-update
@@ -42,7 +42,8 @@ jobs:
           git config --local user.name "GitHub Action Bot"
           git add CGC_Analyzer/gsw_data/
           
-          if ! git diff --staged --quiet; then
+          if ! git diff --cached --quiet; then
+            echo "Changes detected. Committing and pushing..."
             git commit -m "Auto-update CGC weekly data [skip ci]"
             git fetch origin main
             git rebase origin/main
