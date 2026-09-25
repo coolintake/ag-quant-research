@@ -1,0 +1,63 @@
+﻿"Cube Title","Product Id","CANSIM Id",URL,"Cube Notes","Archive Status",Frequency,"Start Reference Period","End Reference Period","Total number of dimensions"
+"Renewable fuel plant statistics, supply and disposition, monthly","25100082",,"https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2510008201",,"CURRENT - a cube available to the public and that is current","Monthly","2020-01-01","2026-06-01","3",
+
+"Dimension ID","Dimension name","Dimension Notes","Dimension Definitions"
+"1","Geography",,""
+"2","Supply and disposition",,""
+"3","Products",,""
+
+"Dimension ID","Member Name","Classification Code","Member ID","Parent Member ID",Terminated,"Member Notes","Member Definitions"
+"1","Canada","[11124]","1","","",,
+"2","Beginning stocks","","1","","",4,
+"2","Receipts","","2","","",,
+"2","Inputs","","3","","",,
+"2","Production","","4","","",,
+"2","Shipments","","5","","",,
+"2","Losses and adjustments","","6","","",,
+"2","Ending stocks","","7","","",3,
+"3","Renewable fuel plant feedstocks, total","","1","","",,
+"3","Cereal grains, total","","2","1","",5,
+"3","Vegetable oils, total","","3","1","",6,
+"3","Other renewable fuel plant feedstocks, total","","4","1","",7,
+"3","Renewable fuels, total","","5","","",,
+"3","Fuel ethanol","","6","5","",,
+"3","Renewable fuels except fuel ethanol","","7","5","",1,
+"3","Renewable fuel plant co-products, total","","8","","",,
+"3","Distillers grains, total","","9","8","",,
+"3","Renewable fuel plant co-products except distillers grains","","10","8","",2,
+
+Symbol Legend
+Description,Symbol
+"not available for a specific reference period","..",
+"less than the limit of detection","<LOD",
+"value rounded to 0 (zero) where there is a meaningful distinction between true zero and the value that was rounded","0s",
+"data quality: excellent","A",
+"data quality: very good","B",
+"data quality: good","C",
+"data quality: acceptable","D",
+"use with caution","E",
+"too unreliable to be published","F",
+"not applicable","...",
+"preliminary","p",
+"revised","r",
+"suppressed to meet the confidentiality requirements of the Statistics Act","x",
+"terminated","t",
+
+"Survey Code","Survey Name"
+"5294","Monthly Renewable Fuel and Hydrogen Survey (MRFHS)"
+
+"Subject Code","Subject Name"
+"25","Energy"
+
+"Note ID",Note
+1,"Renewable Fuels Except Fuel Ethanol include biodiesel fuel (FAME), renewable diesel fuel (HDRD/HVO) and other renewable fuels."
+2,"Renewable Fuel Plant Co-Products Except Distillers Grains include industrial ethanol (food grade), distillers corn oil, glycerol/glycerine and other co-products."
+3,"Inventories of fuel stored for future use. Stocks are reported as of the last day of the month."
+4,"Beginning stocks are quantities held on the first day of the reporting month (start of day)."
+5,"Cereal grains include wheat, corn, rye, barley, oats, and triticale."
+6,"Vegetable oils include canola oil, soya oil and other vegetable oils."
+7,"Other renewable plant feedstocks include agricultural biomass residues, forestry biomass residues, municipal solid waste, animals fats, other biomass residue feedstocks, used cooking oil, methanol."
+
+"Correction ID","Correction Date","Correction Note"
+"3812","2024-04-17","On April 17, 2024 the January 2024 values for the following variables were corrected: Other renewable fuel plant feedstocks, total; Renewable fuel plant feedstocks, total; Renewable fuel plant co-products except distillers grains; Renewable fuel plant co-products, total; Renewable fuels except fuel ethanol.",
+

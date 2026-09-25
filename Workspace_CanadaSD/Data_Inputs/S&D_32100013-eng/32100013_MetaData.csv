@@ -1,0 +1,100 @@
+﻿"Cube Title","Product Id","CANSIM Id",URL,"Cube Notes","Archive Status",Frequency,"Start Reference Period","End Reference Period","Total number of dimensions"
+"Supply and disposition of grains in Canada","32100013","001-0041","https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3210001301",1;2;3;23,"CURRENT - a cube available to the public and that is current","Occasional Monthly","1996-12-01","2026-07-01","3",
+
+"Dimension ID","Dimension name","Dimension Notes","Dimension Definitions"
+"1","Geography",,""
+"2","Type of crop",,""
+"3","Supply and disposition of grains",,""
+
+"Dimension ID","Member Name","Classification Code","Member ID","Parent Member ID",Terminated,"Member Notes","Member Definitions"
+"1","Canada","[11124]","1","","",,
+"2","All wheat","","1","","",5;12;15;24;26,
+"2","Durum wheat","","2","1","",5;6;12;13;14;24;25;26,
+"2","Wheat, excluding durum","","3","1","",5;7;12;15;24;25;26,
+"2","Oats","","4","","",5;8;10;11;12;24;26,
+"2","Barley","","5","","",5;9;12;24;25;26,
+"2","Rye","","6","","",9;12;24;25;26,
+"2","Flaxseed","","7","","",5;6;12;17;24;25,
+"2","Canola","","8","","",5;9;12;16;18;21;24;25,
+"2","Soybeans","","9","","",3;8;24,
+"2","Dry peas","","10","","",8,
+"2","Lentils","","11","","",,
+"2","Mustard seed","","12","","",,
+"2","Canary seed","","13","","",,
+"2","Sunflower seed","","14","","",,
+"2","Chickpeas","","15","","",,
+"3","Total supplies","","1","","",,
+"3","Total beginning stocks","","2","1","",,
+"3","Beginning stocks on farms","","3","2","",,
+"3","Beginning stocks in commercial positions","","4","2","",,
+"3","Production","","5","1","",,
+"3","Imports","","6","1","",,
+"3","Total disposition","","7","","",,
+"3","Total exports","","8","7","",,
+"3","Grain exports","","9","8","",,
+"3","Product exports","","10","8","",,
+"3","Total domestic disappearance","","11","7","",,
+"3","Human food","","12","11","",,
+"3","Seed requirements","","13","11","",,
+"3","Industrial use","","14","11","",,
+"3","Loss in handling","","15","11","",,
+"3","Animal feed, waste and dockage","","16","11","",,
+"3","Other domestic disappearance","","17","11","",,
+"3","Total ending stocks","","18","7","",,
+"3","Ending stocks on farms","","19","18","",,
+"3","Ending stocks in commercial positions","","20","18","",,
+
+Symbol Legend
+Description,Symbol
+"not available for a specific reference period","..",
+"less than the limit of detection","<LOD",
+"value rounded to 0 (zero) where there is a meaningful distinction between true zero and the value that was rounded","0s",
+"data quality: excellent","A",
+"data quality: very good","B",
+"data quality: good","C",
+"data quality: acceptable","D",
+"use with caution","E",
+"too unreliable to be published","F",
+"not applicable","...",
+"preliminary","p",
+"revised","r",
+"suppressed to meet the confidentiality requirements of the Statistics Act","x",
+"terminated","t",
+
+"Survey Code","Survey Name"
+"3403","Quarterly Miller's Survey"
+"3404","Monthly Crushing Operations Survey"
+"3464","Commercial Stocks of Corn and Soybeans Survey"
+"3476","Commercial Stocks of the Major Special Crops Survey"
+"5153","Grain Used for Industrial Purposes Survey"
+
+"Subject Code","Subject Name"
+"32","Agriculture and food"
+
+"Note ID",Note
+1,"See tables 32-10-0250, 32-10-0256 and 32-10-0270 for historical data."
+2,"All grains except soybeans are based on the crop year August to July. The data for the periods are cumulative over the crop year (March 20XX = August to March; July 20XX = August to July; and December 20XX = August to December)."
+3,"Soybeans are based on the crop year September to August. The data for the periods are cumulative over the crop year (March 20XX = September to March; July 20XX = September to August; and December 20XX = September to December)."
+5,"Commercial stocks include condominium stocks as of December 2003."
+6,"Grain exports exclude seed."
+7,"Grain exports include seed."
+8,"Grain exports and imports include seed."
+9,"Grain exports exclude seed. Grain imports include seed."
+10,"Excludes mixed feed oats."
+11,"Excludes products for export. See export category."
+12,"Animal feed, waste and dockage calculated residually."
+13,"Some durum wheat is blended with other wheats and exported as wheat excluding durum."
+14,"May include small amount of use by food plants."
+15,"Wheat in-transit at July 31, 2003 adjusted down by the Canadian Grain Commission to correct an historical anomaly in reported visible stocks."
+16,"Includes gains in handling."
+17,"Excludes process elevator stocks from July 2002."
+18,"Licensed positions only."
+21,"Historical data may include some rapeseed."
+23,"See table 32-10-0014 for Supply and disposition of corn in Canada and selected provinces as of March 31, August 31 and December 31, occasional (metric tonnes)."
+24,"Commercial stocks include grain supplies held at elevators (licensed, process, transfer and terminal) and grain held in condominium storage, as well as grain in-transit."
+25,"Data in this table are updated three times a year. For the most updated data on grain exports, see table 32-10-0008."
+26,"Product exports are published in grain equivalent."
+
+"Correction ID","Correction Date","Correction Note"
+"1284","2020-11-20","On November 20, 2020, beginning stocks on farms, total beginning stocks, total supplies, other domestic disappearance, total domestics disappearance and total disposition were corrected for soybeans for 2019 and 2020.",
+

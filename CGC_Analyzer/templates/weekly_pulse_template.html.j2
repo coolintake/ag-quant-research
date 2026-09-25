@@ -42,19 +42,18 @@
           </span>
         </td>
       </tr>
-        <!-- Primary Deliveries — Weekly -->
-        <tr>
+      <!-- Primary Deliveries — YTD -->
+      <tr>
         <td style="padding:0 0 8px 0; border-bottom:1px solid #E1E6EB; font-size:13px; color:#4A5A68;">
-            Primary Deliveries — Weekly
+          Primary Deliveries — YTD
         </td>
         <td align="right" style="padding:0 0 8px 0; border-bottom:1px solid #E1E6EB; font-size:14px; font-weight:700; color:#0F2438;">
-            {{ macro.weekly_deliveries_kt | kt }} KMT
-            <span style="font-weight:500; font-size:12px; color:{{ '#1a7f37' if (macro.deliveries_wow_pct or 0) >= 0 else '#c0392b' }};">
-            ({{ macro.deliveries_wow_pct | pct }} WoW)
-            </span>
+          {{ macro.ytd_deliveries_mmt | mmt }} MMT
+          <span style="font-weight:500; font-size:12px; color:{{ '#1a7f37' if (macro.deliveries_yoy_pct or 0) >= 0 else '#c0392b' }};">
+            ({{ macro.deliveries_yoy_pct | pct }} vs LY | {{ macro.deliveries_vs_5yr_pct | pct }} vs 5-Yr Avg)
+          </span>
         </td>
-        </tr>
-      <!-- Terminal Outflow (Weekly Movement) Header -->
+      </tr>      <!-- Terminal Outflow (Weekly Movement) Header -->
       <tr>
         <td style="padding:10px 0 6px 0; font-size:13px; font-weight:700; color:#0F2438;">
           Terminal Outflow (Weekly Exports)

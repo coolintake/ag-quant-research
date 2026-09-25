@@ -1,0 +1,50 @@
+﻿"Cube Title","Product Id","CANSIM Id",URL,"Cube Notes","Archive Status",Frequency,"Start Reference Period","End Reference Period","Total number of dimensions"
+"Crushing statistics of major oilseeds","32100352","001-0005","https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3210035201",,"CURRENT - a cube available to the public and that is current","Monthly","1971-08-01","2026-07-01","3",
+
+"Dimension ID","Dimension name","Dimension Notes","Dimension Definitions"
+"1","Geography",,""
+"2","Process",,""
+"3","Commodity",3,""
+
+"Dimension ID","Member Name","Classification Code","Member ID","Parent Member ID",Terminated,"Member Notes","Member Definitions"
+"1","Canada","[11124]","1","","",,
+"2","Seed crushed","","1","","",,
+"2","Seed crushed (stocks)","","6","","",,
+"2","Oil  produced","","2","","",,
+"2","Oil produced (stocks)","","4","","",,
+"2","Meal produced","","3","","",,
+"2","Meal produced (stocks)","","5","","",,
+"3","Canola (rapeseed)","","6","","",,
+"3","Soybeans","","5","","",,
+"3","Flaxseed","","4","","t",1;3,
+"3","Sunflower seed","","7","","t",1;2,
+
+Symbol Legend
+Description,Symbol
+"not available for a specific reference period","..",
+"less than the limit of detection","<LOD",
+"value rounded to 0 (zero) where there is a meaningful distinction between true zero and the value that was rounded","0s",
+"data quality: excellent","A",
+"data quality: very good","B",
+"data quality: good","C",
+"data quality: acceptable","D",
+"use with caution","E",
+"too unreliable to be published","F",
+"not applicable","...",
+"preliminary","p",
+"revised","r",
+"suppressed to meet the confidentiality requirements of the Statistics Act","x",
+"terminated","t",
+
+"Survey Code","Survey Name"
+"3404","Monthly Crushing Operations Survey"
+
+"Subject Code","Subject Name"
+"32","Agriculture and food"
+
+"Note ID",Note
+1,"Confidential to meet secrecy requirements of the Statistics Act."
+2,"The data was terminated as of August 1997."
+3,"The data was terminated as of January 2019."
+
+"Correction ID","Correction Date","Correction Note"
