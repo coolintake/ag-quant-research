@@ -583,6 +583,16 @@ YR_SUBTOTAL_LINE = 'thick'            # openpyxl style: 'thin' | 'medium' | 'thi
 # Rows shown in bold (label and values) on *_Yr tabs
 YR_BOLD_METRICS = {'Total Supply', 'Total Disposition', 'Ending Stocks', 'CHECK'}
 
+# Title rows (A1 headline, and each vegetable oil table's headline)
+YR_TITLE_ROW_HEIGHT = 26.25
+
+# Vegetable oil tables (drawn below Canola_Yr / Soybeans_Yr)
+VEGOIL_SUBTOTAL_TOP = 'thin'          # Total Supply / Total Disposition rows
+VEGOIL_SUBTOTAL_BOTTOM = 'thick'
+VEGOIL_CHECK_OK_FILL = 'D9EAD3'       # CHECK within +/-0.000001 KMT
+VEGOIL_CHECK_TOL = '0.000001'
+VEGOIL_GROUP_TITLE_SIZE = 18          # Can_Vegoils_Yr A1 headline part (bold); detail part = ENGINE_FONT_SIZE italic
+
 
 if __name__ == "__main__":
     # Quick test

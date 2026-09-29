@@ -1,0 +1,105 @@
+Source Commodity,Crop_Year,Commodity_Group,StatCan_Raw_Metric,Tier1_Commodity_Metric,Tier2_National_Metric,Calculation_Notes
+"Wheat, excluding durum",Aug-Jul,Cereal,Total beginning stocks,Beginning Stocks,Beginning Stocks,
+"Wheat, excluding durum",Aug-Jul,Cereal,Imports,Imports,Imports,
+"Wheat, excluding durum",Aug-Jul,Cereal,Production,Production,Production,
+"Wheat, excluding durum",Aug-Jul,Cereal,Human food,Food,Food & Processing,
+"Wheat, excluding durum",Aug-Jul,Cereal,Industrial use,Industrial,Food & Processing,
+"Wheat, excluding durum",Aug-Jul,Cereal,Seed requirements,FSR,FSR,
+"Wheat, excluding durum",Aug-Jul,Cereal,Loss in handling,FSR,FSR,
+"Wheat, excluding durum",Aug-Jul,Cereal,"Animal feed, waste and dockage",FSR,FSR,
+"Wheat, excluding durum",Aug-Jul,Cereal,Total exports,Exports,Exports,
+"Wheat, excluding durum",Aug-Jul,Cereal,Total ending stocks,Ending Stocks,Ending Stocks,
+Durum wheat,Aug-Jul,Cereal,Total beginning stocks,Beginning Stocks,Beginning Stocks,
+Durum wheat,Aug-Jul,Cereal,Imports,Imports,Imports,
+Durum wheat,Aug-Jul,Cereal,Production,Production,Production,
+Durum wheat,Aug-Jul,Cereal,Human food,Food,Food & Processing,
+Durum wheat,Aug-Jul,Cereal,Industrial use,Industrial,Food & Processing,
+Durum wheat,Aug-Jul,Cereal,Seed requirements,FSR,FSR,
+Durum wheat,Aug-Jul,Cereal,Loss in handling,FSR,FSR,
+Durum wheat,Aug-Jul,Cereal,"Animal feed, waste and dockage",FSR,FSR,
+Durum wheat,Aug-Jul,Cereal,Total exports,Exports,Exports,
+Durum wheat,Aug-Jul,Cereal,Total ending stocks,Ending Stocks,Ending Stocks,
+Oats,Aug-Jul,Cereal,Total beginning stocks,Beginning Stocks,Beginning Stocks,
+Oats,Aug-Jul,Cereal,Imports,Imports,Imports,
+Oats,Aug-Jul,Cereal,Production,Production,Production,
+Oats,Aug-Jul,Cereal,Human food,Food,Food & Processing,
+Oats,Aug-Jul,Cereal,Industrial use,Industrial,Food & Processing,
+Oats,Aug-Jul,Cereal,Seed requirements,FSR,FSR,
+Oats,Aug-Jul,Cereal,Loss in handling,FSR,FSR,
+Oats,Aug-Jul,Cereal,"Animal feed, waste and dockage",FSR,FSR,
+Oats,Aug-Jul,Cereal,Total exports,Exports,Exports,
+Oats,Aug-Jul,Cereal,Total ending stocks,Ending Stocks,Ending Stocks,
+Barley,Aug-Jul,Cereal,Total beginning stocks,Beginning Stocks,Beginning Stocks,
+Barley,Aug-Jul,Cereal,Imports,Imports,Imports,
+Barley,Aug-Jul,Cereal,Production,Production,Production,
+Barley,Aug-Jul,Cereal,Human food,Food,Food & Processing,
+Barley,Aug-Jul,Cereal,Industrial use,Industrial,Food & Processing,
+Barley,Aug-Jul,Cereal,Seed requirements,FSR,FSR,
+Barley,Aug-Jul,Cereal,Loss in handling,FSR,FSR,
+Barley,Aug-Jul,Cereal,"Animal feed, waste and dockage",FSR,FSR,
+Barley,Aug-Jul,Cereal,Total exports,Exports,Exports,
+Barley,Aug-Jul,Cereal,Total ending stocks,Ending Stocks,Ending Stocks,
+Canola,Aug-Jul,Oilseed,Total beginning stocks,Beginning Stocks,Beginning Stocks,
+Canola,Aug-Jul,Oilseed,Imports,Imports,Imports,
+Canola,Aug-Jul,Oilseed,Production,Production,Production,
+Canola,Aug-Jul,Oilseed,Human food,Food,Food & Processing,
+Canola,Aug-Jul,Oilseed,Industrial use,Crush,Food & Processing,
+Canola,Aug-Jul,Oilseed,Seed requirements,FSR,FSR,
+Canola,Aug-Jul,Oilseed,Loss in handling,FSR,FSR,
+Canola,Aug-Jul,Oilseed,"Animal feed, waste and dockage",FSR,FSR,
+Canola,Aug-Jul,Oilseed,Total exports,Exports,Exports,
+Canola,Aug-Jul,Oilseed,Total ending stocks,Ending Stocks,Ending Stocks,
+Soybeans,Sep-Aug,Oilseed,Total beginning stocks,Beginning Stocks,Beginning Stocks,
+Soybeans,Sep-Aug,Oilseed,Imports,Imports,Imports,
+Soybeans,Sep-Aug,Oilseed,Production,Production,Production,
+Soybeans,Sep-Aug,Oilseed,Other domestic disappearance,Food,Food & Processing,
+Soybeans,Sep-Aug,Oilseed,Industrial use,Crush,Food & Processing,
+Soybeans,Sep-Aug,Oilseed,Seed requirements,FSR,FSR,
+Soybeans,Sep-Aug,Oilseed,Loss in handling,FSR,FSR,
+Soybeans,Sep-Aug,Oilseed,"Animal feed, waste and dockage",FSR,FSR,
+Soybeans,Sep-Aug,Oilseed,Total exports,Exports,Exports,
+Soybeans,Sep-Aug,Oilseed,Total ending stocks,Ending Stocks,Ending Stocks,
+Canola (rapeseed),Sep-Aug,Vegetable Oil,Oil produced (stocks),Beginning Stocks,Beginning Stocks,Prior month Ending Stocks (or COPA-StatCan crush survey stock reports)
+Canola (rapeseed),Sep-Aug,Vegetable Oil,Oil  produced,Production,Production,Canola Crush (MT) * Oil Extraction Yield (~41.5%)
+Canola (rapeseed),Sep-Aug,Vegetable Oil,N-A,Imports,Imports,"HS Code 1514 (1514.11, 1514.19, 1514.91, 1514.99)"
+Canola (rapeseed),Sep-Aug,Vegetable Oil,N-A,Industrial,Food & Processing,Biofuel Feedstock: Biodiesel (BD) & Renewable Diesel (RD) domestic consumption
+Canola (rapeseed),Sep-Aug,Vegetable Oil,N-A,Food,Food & Processing,"Domestic edible consumption (margarine, salad-cooking oils)"
+Canola (rapeseed),Sep-Aug,Vegetable Oil,N-A,Exports,Exports,HS Code 1514 (Crude & Refined Canola Oil)
+Canola (rapeseed),Sep-Aug,Vegetable Oil,Oil produced (stocks),Ending Stocks,Ending Stocks,Beginning Stocks + Production + Imports - Industrial - Food - Exports
+Canola (rapeseed),Sep-Aug,Protein Meal,Meal produced (stocks),Beginning Stocks,Beginning Stocks,Prior month Ending Stocks (or plant level estimates)
+Canola (rapeseed),Sep-Aug,Protein Meal,Meal produced,Production,Production,Canola Crush (MT) * Meal Yield (~58.0%)
+Canola (rapeseed),Sep-Aug,Protein Meal,N-A,Imports,Imports,HS Code 2306.41 & 2306.49
+Canola (rapeseed),Sep-Aug,Protein Meal,N-A,Feed & Residual,Feed & Residual,Balancing component: Total Supply - Exports - Target-Estimated Ending Stocks
+Canola (rapeseed),Sep-Aug,Protein Meal,N-A,Exports,Exports,HS Code 2306.41 & 2306.49
+Canola (rapeseed),Sep-Aug,Protein Meal,Meal produced (stocks),Ending Stocks,Ending Stocks,Estimated target operational carryout (or derived from residual model)
+Soybeans,Oct-Sep,Vegetable Oil,Oil produced (stocks),Beginning Stocks,Beginning Stocks,Prior month Ending Stocks (or COPA-StatCan crush survey stock reports)
+Soybeans,Oct-Sep,Vegetable Oil,Oil  produced,Production,Production,Soybean  Crush (MT) * Oil Extraction Yield (~41.5%)
+Soybeans,Oct-Sep,Vegetable Oil,N-A,Imports,Imports,"HS Code 1514 (1514.11, 1514.19, 1514.91, 1514.99)"
+Soybeans,Oct-Sep,Vegetable Oil,N-A,Industrial,Food & Processing,Biofuel Feedstock: Biodiesel (BD) & Renewable Diesel (RD) domestic consumption
+Soybeans,Oct-Sep,Vegetable Oil,N-A,Food,Food & Processing,"Domestic edible consumption (margarine, salad-cooking oils)"
+Soybeans,Oct-Sep,Vegetable Oil,N-A,Exports,Exports,HS Code 1514 (Crude & Refined Canola Oil)
+Soybeans,Oct-Sep,Vegetable Oil,Oil produced (stocks),Ending Stocks,Ending Stocks,Beginning Stocks + Production + Imports - Industrial - Food - Exports
+Soybeans,Oct-Sep,Protein Meal,Meal produced (stocks),Beginning Stocks,Beginning Stocks,Prior month Ending Stocks (or plant level estimates)
+Soybeans,Oct-Sep,Protein Meal,Meal produced,Production,Production,Canola Crush (MT) * Meal Yield (~58.0%)
+Soybeans,Oct-Sep,Protein Meal,N-A,Imports,Imports,HS Code 2306.41 & 2306.49
+Soybeans,Oct-Sep,Protein Meal,N-A,Feed & Residual,Feed & Residual,Balancing component: Total Supply - Exports - Target-Estimated Ending Stocks
+Soybeans,Oct-Sep,Protein Meal,N-A,Exports,Exports,HS Code 2306.41 & 2306.49
+Soybeans,Oct-Sep,Protein Meal,Meal produced (stocks),Ending Stocks,Ending Stocks,Estimated target operational carryout (or derived from residual model)
+Dry peas,Aug-Jul,Pulse,Total beginning stocks,Beginning Stocks,Beginning Stocks,
+Dry peas,Aug-Jul,Pulse,Imports,Imports,Imports,
+Dry peas,Aug-Jul,Pulse,Production,Production,Production,
+Dry peas,Aug-Jul,Pulse,Other domestic disappearance,FSR,Food & Processing,
+Dry peas,Aug-Jul,Pulse,Seed requirements,FSR,FSR,
+Dry peas,Aug-Jul,Pulse,Loss in handling,FSR,FSR,
+Dry peas,Aug-Jul,Pulse,"Animal feed, waste and dockage",FSR,FSR,
+Dry peas,Aug-Jul,Pulse,Total exports,Exports,Exports,
+Dry peas,Aug-Jul,Pulse,Total ending stocks,Ending Stocks,Ending Stocks,
+Lentils,Aug-Jul,Pulse,Total beginning stocks,Beginning Stocks,Beginning Stocks,
+Lentils,Aug-Jul,Pulse,Imports,Imports,Imports,
+Lentils,Aug-Jul,Pulse,Production,Production,Production,
+Lentils,Aug-Jul,Pulse,Other domestic disappearance,FSR,Food & Processing,
+Lentils,Aug-Jul,Pulse,Seed requirements,FSR,FSR,
+Lentils,Aug-Jul,Pulse,Loss in handling,FSR,FSR,
+Lentils,Aug-Jul,Pulse,"Animal feed, waste and dockage",FSR,FSR,
+Lentils,Aug-Jul,Pulse,Total exports,Exports,Exports,
+Lentils,Aug-Jul,Pulse,Total ending stocks,Ending Stocks,Ending Stocks,

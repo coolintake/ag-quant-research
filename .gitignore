@@ -1,3 +1,16 @@
 
 CIMTD/*.zip
 CIMTD/*.xlsx
+
+# Python bytecode (all projects)
+__pycache__/
+*.pyc
+
+# Office lock / temp files (all projects)
+~$*
+
+# Workspace_CanadaSD: generated workbooks and dated backups.
+# Scoped to this workspace so CGC_Analyzer/Outputs (committed by the weekly
+# auto-update job) is unaffected.
+Workspace_CanadaSD/Outputs/*.xlsx
+Workspace_CanadaSD/**/*_backup_[0-9]*.xlsx

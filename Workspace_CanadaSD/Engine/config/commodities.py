@@ -32,23 +32,24 @@ COMMODITY_ALIASES: Dict[str, str] = {
     'Wheat, all': WHEAT_ALL,                       # 32100359 planting
     # Oilseeds
     'Canola (rapeseed)': 'Canola',                 # 32100352 / 32100359
-    # Pulses
-    'Peas, dry': 'Dry peas',                       # 32100359 planting
+    # Pulses. Engine key for peas is 'Peas' (tabs Peas_Mo / Peas_Yr).
+    'Dry peas': 'Peas',                            # 32100013 S&D
+    'Peas, dry': 'Peas',                           # 32100359 planting
     'Chick peas': 'Chickpeas',                     # 32100359 planting
     # NOTE: 'Chickpeas' is its own crop in 32100013; it used to be mapped
-    # onto 'Dry peas', which silently mixed two balance sheets.
-    # NOTE: CIMT 'Yellow Peas' / 'Red Lentils' are sub-classes, not totals,
-    # so they are intentionally left unmapped.
+    # onto peas, which silently mixed two balance sheets.
 }
 
 # Crop-year start month. StatCan 32100013 runs Aug-Jul for all grains;
 # Mapping_Dictionary lists Sep-Aug for soybeans.
 CROP_YEAR_START_MONTH: Dict[str, int] = {
     'Wheat': 8, 'Durum': 8, 'Oats': 8, 'Barley': 8,
-    'Canola': 8, 'Dry peas': 8, 'Lentils': 8, 'Chickpeas': 8,
+    'Canola': 8, 'Peas': 8, 'Lentils': 8, 'Chickpeas': 8,
     WHEAT_ALL: 8,
-    'Soybeans': 9, 'Soyoil': 9, 'Soymeal': 9,
-    'Canola Oil': 8, 'Canola Meal': 8,
+    'Soybeans': 9, 'Soymeal': 9,
+    'Canola Meal': 8,
+    # Vegetable oils are NOT listed here: their marketing years (Canola Oil
+    # Sep-Aug, Soy Oil Oct-Sep) are read from CMFT_Main.csv (VEG_OILS below).
 }
 DEFAULT_START_MONTH = 8
 
@@ -58,18 +59,18 @@ ANCHOR_MONTH = 7
 COMMODITY_GROUP: Dict[str, str] = {
     'Wheat': 'Cereal', 'Durum': 'Cereal', 'Oats': 'Cereal', 'Barley': 'Cereal',
     'Canola': 'Oilseed', 'Soybeans': 'Oilseed',
-    'Dry peas': 'Pulse', 'Lentils': 'Pulse', 'Chickpeas': 'Pulse',
+    'Peas': 'Pulse', 'Lentils': 'Pulse', 'Chickpeas': 'Pulse',
 }
 
 TIER1_COMMODITIES = [
     'Wheat', 'Durum', 'Canola', 'Barley', 'Oats',
-    'Soybeans', 'Dry peas', 'Lentils',
+    'Soybeans', 'Peas', 'Lentils',
 ]
 
 # Tonnes -> bushels
 BUSHEL_MULTIPLIERS: Dict[str, float] = {
     'Wheat': 36.7437, 'Durum': 36.7437, 'Soybeans': 36.7437,
-    'Dry peas': 36.7437, 'Lentils': 36.7437,
+    'Peas': 36.7437, 'Lentils': 36.7437,
     'Canola': 44.0925, 'Barley': 45.9296, 'Oats': 64.8418,
 }
 
@@ -102,7 +103,8 @@ def get_group(commodity: str) -> str:
 # ---------------------------------------------------------------------------
 # Output conventions for the *_Mo / *_Yr tabs (CanadaSD_Main.xlsx layout)
 # ---------------------------------------------------------------------------
-# Column A label on *_Mo tabs = the StatCan 32100013 series name.
+# Column A label on *_Mo tabs (StatCan 32100013 series name, except Peas,
+# shown as 'Peas' rather than StatCan's 'Dry peas').
 DISPLAY_NAME = {
     'Wheat': 'Wheat, excluding durum',
     'Durum': 'Durum wheat',
@@ -110,13 +112,16 @@ DISPLAY_NAME = {
     'Barley': 'Barley',
     'Oats': 'Oats',
     'Soybeans': 'Soybeans',
-    'Dry peas': 'Dry peas',
+    'Peas': 'Peas',
     'Lentils': 'Lentils',
+    'Chickpeas': 'Chickpeas',
 }
 
-# ENGINE_RULES section 3: historical scope 2002/03 through 2024/25.
+# Historical scope 2002/03 through 2025/26 (RULE-2.1.B). A crop year that is
+# not yet complete (e.g. Soybeans 25-26 before StatCan's Jul 31 release) is
+# shown month by month on *_Mo but left blank on every annual total.
 SCOPE_FIRST_CROP_YEAR = 2002
-SCOPE_LAST_CROP_YEAR = 2024
+SCOPE_LAST_CROP_YEAR = 2025
 
 _MONTH_ABBR = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
                'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
@@ -155,10 +160,13 @@ CIMT_FILE_COMMODITY = {
     'Soybean_Meal': 'Soybean Meal',
     'Soybean_Oil': 'Soybean Oil',
     'Corn': 'Corn',
-    # Sub-classes, NOT the StatCan totals - deliberately not mapped to
-    # 'Dry peas' / 'Lentils'. Map them here if you accept the undercount.
-    'Yellow_Peas': 'Yellow Peas',
-    'Red_Lentils': 'Red Lentils',
+    # Pulses: HS8 workbooks from cimt_build.py. Their 'Raw Data' sheet holds
+    # TOTAL trade (all classes: Total Peas / Total Lentils / Chickpeas), so
+    # it matches StatCan's all-class balance sheets. The Yellow/Green and
+    # Red/Green tabs in those workbooks are trade detail only.
+    'Total_Peas': 'Peas',
+    'Total_Lentils': 'Lentils',
+    'Chickpeas': 'Chickpeas',
 }
 
 # HS filter per commodity: keep only rows whose HS code starts with one of
@@ -211,6 +219,55 @@ STOCKS_MODE = 'anchored'
 
 
 # ---------------------------------------------------------------------------
+# Vegetable oils (byproduct balance sheets, modules/vegoil_builder.py)
+# ---------------------------------------------------------------------------
+# oil key -> sources and where its table is drawn. The marketing-year start
+# month is NOT set here: it comes from the 'Vegetable Oil' rows of
+# CMFT_Main.csv whose 'Source Commodity' equals cmft_source.
+#   crush      : Commodity label in StatCan 32100352 (crush statistics)
+#   cimt       : engine commodity of the CIMT oil workbook (crude + refined)
+#   host       : the oil table is drawn below this commodity's *_Yr table
+#   title      : table headline (column A, 20pt); label: column A on each row
+#   mo_tab     : the oil's monthly tab (its *_Yr table looks values up here)
+VEG_OILS = {
+    'Canola Oil': {'cmft_source': 'Canola (rapeseed)', 'crush': 'Canola (rapeseed)',
+                   'cimt': 'Canola Oil', 'host': 'Canola', 'mo_tab': 'CanolaOil_Mo',
+                   'title': 'Canola Oil', 'label': 'Canola oil'},
+    'Soy Oil':    {'cmft_source': 'Soybeans', 'crush': 'Soybeans',
+                   'cimt': 'Soybean Oil', 'host': 'Soybeans', 'mo_tab': 'SoyOil_Mo',
+                   'title': 'Soy Oil', 'label': 'Soybean oil'},
+}
+# Combined annual tab (Canola Oil + Soy Oil by marketing-year label; written
+# after the last oil's monthly tab). A1 is two-font rich text: headline part
+# at 18pt bold, detail part at 10pt italic.
+VEGOIL_GROUP_TAB = 'Can_Vegoils_Yr'
+VEGOIL_GROUP_TITLE = ('Canada Vegetable Oils ', '- Canola oil (Sep/Aug) & Soyoil (Oct/Sep)')
+VEGOIL_GROUP_LABEL = 'Canada veg oils'
+
+# Protein meals (byproduct balance sheets, modules/meal_builder.py). Same keys
+# as VEG_OILS; marketing years come from the 'Protein Meal' rows of
+# CMFT_Main.csv. History also starts VEG_OIL_FIRST_CROP_YEAR (32100352 meal
+# stocks begin Aug 2015). Each meal table is drawn below its oil table.
+PROTEIN_MEALS = {
+    'Canola Meal': {'cmft_source': 'Canola (rapeseed)', 'crush': 'Canola (rapeseed)',
+                    'cimt': 'Canola Meal', 'host': 'Canola', 'mo_tab': 'CanolaMeal_Mo',
+                    'title': 'Canola Meal', 'label': 'Canola meal'},
+    'Soymeal':     {'cmft_source': 'Soybeans', 'crush': 'Soybeans',
+                    'cimt': 'Soybean Meal', 'host': 'Soybeans', 'mo_tab': 'Soymeal_Mo',
+                    'title': 'Soymeal', 'label': 'Soymeal'},
+}
+MEAL_GROUP_TAB = 'Can_ProteinMeal_Yr'
+MEAL_GROUP_TITLE = ('Canada Protein Meals ', '- Canola meal (Sep/Aug) & Soymeal (Oct/Sep)')
+MEAL_GROUP_LABEL = 'Canada protein meals'
+# 32100352 oil stocks start Aug 2015, so 2015-16 is the first oil year that
+# opens from a surveyed stock. Earlier years are left blank.
+VEG_OIL_FIRST_CROP_YEAR = 2015
+# 25100082 'Vegetable oils, total' / 'Inputs' starts Jan 2020. Months before
+# that use the average monthly intake of this calendar year (flatlined back).
+FEEDSTOCK_BASELINE_YEAR = 2020
+
+
+# ---------------------------------------------------------------------------
 # Group aggregation tabs (*_Yr level, written after the commodity tabs)
 # ---------------------------------------------------------------------------
 # tab name -> (A1 / column A label, member commodities). Each group tab sums
@@ -219,5 +276,26 @@ STOCKS_MODE = 'anchored'
 GROUP_TABS = {
     'Can_Cereals_Yr':  ('Canada Cereals',  ['Wheat', 'Durum', 'Barley', 'Oats']),
     'Can_Oilseeds_Yr': ('Canada Oilseeds', ['Canola', 'Soybeans']),
-    'Can_Pulses_Yr':   ('Canada Pulses',   ['Dry peas', 'Lentils']),
+    'Can_Pulses_Yr':   ('Canada Pulses',   ['Peas', 'Lentils']),
 }
+
+# Workbook tab order: these summary tabs first, in this order, then every
+# commodity tab in build order (<Crop>_Mo, <Crop>_Yr, then its oil / meal *_Mo).
+SUMMARY_TAB_ORDER = ['Can_Cereals_Yr', 'Can_Oilseeds_Yr', 'Can_Vegoils_Yr',
+                     'Can_ProteinMeal_Yr', 'Can_Pulses_Yr']
+
+# ---------------------------------------------------------------------------
+# CanadaSD_Main merge (Engine/merge_main_workbook.py -> Outputs/CanadaSD_Main.xlsx)
+# ---------------------------------------------------------------------------
+# History: the last MAIN_HISTORY_YEARS crop-year columns of the engine's *_Yr
+# tabs (read from CanadaSD_Engine.xlsx, so the window rolls with the scope).
+# Forecast: the first MAIN_FORECAST_COUNT crop years (max 3) found in the
+# *_Mo_F tabs of CanSD_Input_wb.xlsx, headed with '*'. One delta column per
+# forecast year = forecast minus the last history (actual) year.
+MAIN_HISTORY_YEARS = 5
+MAIN_FORECAST_COUNT = 2
+MAIN_TAB_ORDER = ['Analytics_Dashboard', 'Can_Total_Yr', 'Can_Cereals_Yr', 'Can_Oilseeds_Yr',
+                  'Can_Vegoils_Yr', 'Can_ProteinMeal_Yr', 'Can_Pulses_Yr']
+# Can_Total_Yr = these group tabs (field crops only: byproducts would double
+# count the crushed seed)
+TOTAL_TAB_MEMBERS = ['Can_Cereals_Yr', 'Can_Oilseeds_Yr', 'Can_Pulses_Yr']

@@ -27,6 +27,8 @@ from modules.ingest_cimt import ingest_all_cimt
 from modules.ingest_overrides import ingest_overrides
 from config.mappings import load_dictionary_mapping
 from modules.monthly_builder import build_monthly
+from modules.vegoil_builder import run_vegoil
+from modules.meal_builder import run_meal
 from config.commodities import (
     TRADE_SOURCE, STOCKS_MODE,
     BUSHEL_MULTIPLIERS, CROP_YEAR_START_MONTH, ANCHOR_MONTH,
@@ -582,7 +584,15 @@ def run_balancer() -> pd.DataFrame:
     DATA_STORE_DIR.mkdir(parents=True, exist_ok=True)
     master_df.to_csv(MASTER_FACT_TABLE, index=False)
     print(f"  [OK] Written {len(master_df)} rows to CMFT_Master.csv")
-    
+
+    # 9. VEGETABLE OIL BALANCE SHEETS (own fact table; see modules/vegoil_builder.py)
+    print("\n[+] Vegetable oil balance sheets (Canola Oil, Soy Oil)...")
+    run_vegoil(cimt_df)
+
+    # 10. PROTEIN MEAL BALANCE SHEETS (own fact table; see modules/meal_builder.py)
+    print("\n[+] Protein meal balance sheets (Canola Meal, Soymeal)...")
+    run_meal(cimt_df)
+
     return master_df
 
 

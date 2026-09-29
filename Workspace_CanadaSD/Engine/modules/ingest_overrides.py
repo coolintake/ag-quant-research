@@ -108,8 +108,12 @@ def load_overrides() -> pd.DataFrame:
     Returns:
         DataFrame with override records (empty template if sheet doesn't exist)
     """
+    if not CMFT_MAIN_XLSX.exists():                 # retired to Archive\ (ENGINE_RULES 1)
+        print(f"  {CMFT_MAIN_XLSX.name} not found - no overrides, returning empty template...")
+        return _create_overrides_template()
+
     sheet_name = _find_overrides_sheet(CMFT_MAIN_XLSX)
-    
+
     if sheet_name is None:
         print(f"  No overrides sheet found in {CMFT_MAIN_XLSX.name}")
         print(f"  Expected one of: {OVERRIDE_SHEET_NAMES}")

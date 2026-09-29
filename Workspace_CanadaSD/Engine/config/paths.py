@@ -4,8 +4,9 @@ Centralized file paths for the CMFT Engine.
 Layout (everything resolves from this file's location, so the whole
 workspace can be moved or renamed without editing paths):
 
-    C:\\Workspace_CanadaSD\\            <- WORKSPACE_ROOT
-        CMFT_Main.xlsx                 (config workbook: Mapping_Dictionary, Commodity_Dictionary)
+    C:\\Users\\ahmed\\OneDrive\\Desktop\\Python\\Workspace_CanadaSD\\   <- WORKSPACE_ROOT
+        CMFT_Main.csv                  (mapping table: StatCan label -> engine metric)
+        Archive\\old_CMFT_Main.xlsx      (retired config workbook, kept for reference)
         CanadaSD_Main.xlsx             (hand-maintained workbook - engine never writes here)
         Data_Inputs\\<table folders>\\  (StatCan CSV + MetaData CSV)
         Outputs\\                       (engine-generated workbook)
@@ -33,13 +34,23 @@ STATCAN_DIR = WORKSPACE_ROOT / "Data_Inputs"
 # CIMT: read in place, never copied (ENGINE_RULES section 2)
 CIMT_DIR = Path(os.environ.get("CIMT_DIR", r"C:\Users\ahmed\OneDrive\Desktop\Python\CIMTD"))
 
-# Config workbook (Mapping_Dictionary, Commodity_Dictionary, overrides)
+# Config: mapping table as a flat CSV (the old Mapping_Dictionary sheet).
+# config/mappings.py reads it and validates it on --check.
 CMFT_DATA_DIR = WORKSPACE_ROOT
+CMFT_MAIN_CSV = WORKSPACE_ROOT / "CMFT_Main.csv"
+MAPPING_CSV = CMFT_MAIN_CSV                   # alias used by config/mappings.py
+
+# Retired workbook, moved to Archive\old_CMFT_Main.xlsx and never read for
+# mappings. This root path intentionally does not exist: it is kept only so
+# ingest_overrides.py finds no Forecast_Overrides sheet and returns an empty
+# table. Do not point it at the archive copy.
 CMFT_MAIN_XLSX = WORKSPACE_ROOT / "CMFT_Main.xlsx"
 
 # ---- Outputs -----------------------------------------------------------
 DATA_STORE_DIR = WORKSPACE_ROOT / "data_store"
 MASTER_FACT_TABLE = DATA_STORE_DIR / "CMFT_Master.csv"
+VEGOIL_FACT_TABLE = DATA_STORE_DIR / "CMFT_VegOil_Master.csv"   # one row per oil x month
+MEAL_FACT_TABLE = DATA_STORE_DIR / "CMFT_Meal_Master.csv"       # one row per meal x month
 
 # exporter_excel.py builds a NEW workbook and saves it whole, so it must NOT
 # point at the hand-maintained CanadaSD_Main.xlsx (it would wipe every tab,
@@ -51,6 +62,12 @@ TARGET_WORKBOOK = CANADASD_MAIN_XLSX          # legacy alias
 # The workbook you maintain by hand (read-only as far as the engine is concerned)
 CANADASD_MANUAL_XLSX = WORKSPACE_ROOT / "CanadaSD_Main.xlsx"
 
+# Generated merge of engine history + forecast inputs (merge_main_workbook.py).
+# Lives in Outputs\, never at the root: the root CanadaSD_Main.xlsx above is
+# hand-maintained and is never written.
+MAIN_OUTPUT_XLSX = OUTPUTS_DIR / "CanadaSD_Main.xlsx"
+FORECAST_INPUT_XLSX = STATCAN_DIR / "CanSD_Input_wb" / "CanSD_Input_wb.xlsx"
+
 
 def verify_paths() -> dict:
     """Report which inputs exist. Run: python -m config.paths (from Engine\\)."""
@@ -58,7 +75,7 @@ def verify_paths() -> dict:
         "WORKSPACE_ROOT": WORKSPACE_ROOT,
         "STATCAN_DIR": STATCAN_DIR,
         "CIMT_DIR": CIMT_DIR,
-        "CMFT_MAIN_XLSX": CMFT_MAIN_XLSX,
+        "CMFT_MAIN_CSV": CMFT_MAIN_CSV,
     }
     results = {name: {"path": str(p), "exists": p.exists()} for name, p in inputs.items()}
 

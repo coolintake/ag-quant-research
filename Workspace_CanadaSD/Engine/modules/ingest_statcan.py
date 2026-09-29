@@ -151,13 +151,26 @@ def _filter_july_revision(df: pd.DataFrame, folder_key: str) -> pd.DataFrame:
     # Keep only July (month=7) releases for production, stocks, supply/disposition metrics
     # These are the final estimates
     july_mask = df_filtered["_month"] == 7
-    
-    # For metrics that have quarterly updates, keep July
-    # For metrics that are only annual, keep as-is
-    # We'll keep July for all S&D metrics to get final estimates
-    
-    df_july = df_filtered[july_mask].copy()
-    print(f"  July revision filter: {len(df_filtered)} -> {len(df_july)} rows")
+
+    # Current crop year fallback: until the July release is published (all
+    # values '..'), keep that year's Dec 31 / Mar 31 releases so the monthly
+    # builder can anchor the months they cover. Completed years are unchanged.
+    # (Soybeans: the July release proxies the Aug 31 close; Dec -> month 4,
+    # Mar -> month 7.) The crop-year key above is Aug-based, which also groups
+    # soybean Dec/Mar/Jul releases correctly.
+    keys = ["Geography", "Commodity", "_crop_year"]
+    july_published = (
+        df_filtered[july_mask & df_filtered["Value"].notna()][keys].drop_duplicates()
+        .assign(_july_published=True)
+    )
+    df_filtered = df_filtered.merge(july_published, on=keys, how="left")
+    interim_mask = (df_filtered["_month"] != 7) & df_filtered["_july_published"].isna()
+    july_mask = df_filtered["_month"] == 7
+
+    df_july = df_filtered[july_mask | interim_mask].copy()
+    print(f"  July revision filter: {len(df_filtered)} -> {len(df_july)} rows "
+          f"({int(interim_mask.sum())} Dec/Mar rows kept for crop years without a July release)")
+    df_july = df_july.drop(columns=["_july_published"])
     
     # Drop helper columns
     df_july = df_july.drop(columns=["_year", "_month", "_crop_year"])
