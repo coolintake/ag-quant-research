@@ -28,7 +28,10 @@ warnings.filterwarnings('ignore')
 # ============================================================
 # PATH ANCHORS (from ENGINE_RULES.md Section 1)
 # ============================================================
-ROOT_WS = Path(r"C:\Workspace_CanadaSD")
+# Archived script. Root resolves to ...\Desktop\Python\Workspace_CanadaSD (the retired
+# C:\Workspace_CanadaSD is gone). Do not run: it writes Outputs\CanadaSD_Main.xlsx,
+# which Engine\merge_main_workbook.py now owns.
+ROOT_WS = Path(__file__).resolve().parents[3]
 DATA_INPUTS = ROOT_WS / "Data_Inputs"
 OUTPUTS = ROOT_WS / "Outputs"
 TARGET_WORKBOOK = OUTPUTS / "CanadaSD_Main.xlsx"
@@ -637,7 +640,7 @@ def main():
     print("\n" + "=" * 60)
     print("PHASE 4 DURUM BUILD COMPLETE")
     print("=" * 60)
-    print(f"1. Script file: C:\\Workspace_CanadaSD\\Engine\\commodities\\build_durum.py")
+    print(f"1. Script file: {Path(__file__).resolve()}")
     print(f"2. Row count: {row_count}, Matrix shape: {monthly_df.shape}")
     print(f"3. Max Balance_Check: {max_check:.10f} KMT (within ±0.0009)")
     print(f"4. File timestamp: {pd.Timestamp(stat.st_mtime, unit='s')}, Size: {stat.st_size} bytes")
