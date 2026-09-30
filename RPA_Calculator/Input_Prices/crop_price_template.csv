@@ -1,0 +1,16 @@
+Date,Province,Crop_Key,Display_Name,Basis,Futures,Price,Unit,Notes,Yield,Yield_Unit
+2026-11-22,SK,wheat_spring,Hard Red Spring Wheat,,,8.25,$/bu,Late Fall snapshot,,
+2026-11-22,SK,canola,Canola,,,13.8,$/bu,ICE Futures converted to $/bu,,
+2027-02-10,SK,wheat_spring,Hard Red Spring Wheat,,,8.5,$/bu,Winter Crop Show snapshot,,
+2027-02-10,SK,canola,Canola,,,14.1,$/bu,Winter Crop Show snapshot,,
+2027-03-25,SK,wheat_spring,Hard Red Spring Wheat,,,8.1,$/bu,Pre-seeding final snapshot,,
+2027-03-25,SK,canola,Canola,,,13.9,$/bu,Pre-seeding final snapshot,,
+2026-11-22,AB,wheat_spring,Spring Wheat,,,,$/bu,Late Fall snapshot - enter AB bid,,
+2026-11-22,AB,canola,Argentine HT Canola,,,,$/bu,Late Fall snapshot - enter AB bid,,
+2027-02-10,AB,wheat_spring,Spring Wheat,,,,$/bu,Winter Crop Show snapshot - enter AB bid,,
+2027-02-10,AB,canola,Argentine HT Canola,,,,$/bu,Winter Crop Show snapshot - enter AB bid,,
+2027-03-25,AB,wheat_spring,Spring Wheat,,,,$/bu,Pre-seeding final snapshot - enter AB bid,,
+2027-03-25,AB,canola,Argentine HT Canola,,,,$/bu,Pre-seeding final snapshot - enter AB bid,,
+2026-11-22,SK,wheat_cps,CPS Wheat,,,,$/bu,Late Fall snapshot - enter SK CPS/CNHR bid and target yield,,bu/ac
+2027-02-10,SK,wheat_cps,CPS Wheat,,,,$/bu,Winter Crop Show snapshot - enter SK CPS/CNHR bid and target yield,,bu/ac
+2027-03-25,SK,wheat_cps,CPS Wheat,,,,$/bu,Pre-seeding final snapshot - enter SK CPS/CNHR bid and target yield,,bu/ac

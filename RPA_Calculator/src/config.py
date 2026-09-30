@@ -26,6 +26,10 @@ PROVINCE_OUTPUT_DIR = OUTPUT_DIR / "sk"
 INTERMEDIATE_DIR = PROVINCE_OUTPUT_DIR / "intermediate"
 MVS_DIR = PROVINCE_OUTPUT_DIR / "mvs"
 SCENARIO_DIR = PROVINCE_OUTPUT_DIR / "scenarios"   # Phase 2 Tier 1 market scenarios
+MASTER_WORKBOOK = OUTPUT_DIR / "RPA_Master_Calculator.xlsx"   # desk scenario workbook
+PRICE_INPUT_DIR = PROJECT_ROOT / "Input_Prices"
+INPUT_PRICE_TEMPLATE = PRICE_INPUT_DIR / "Input_price_template.csv"     # retail fertilizer quotes
+CROP_PRICE_TEMPLATE = PRICE_INPUT_DIR / "crop_price_template.csv"       # dated grain bid snapshots
 
 OUTPUT_STEM = "sk_historical_mvs_2019_2026"
 OUTPUT_JSON = MVS_DIR / f"{OUTPUT_STEM}.json"   # machine readable
@@ -60,29 +64,30 @@ SOIL_ZONES = (BROWN, DARK_BROWN, BLACK)
 #             2020+ page titles), matched case-insensitively with '*' stripped
 #   price_basis : native cash price unit, "$/bu" or "c/lb" (pulses). Pulses also
 #             carry bu/ac and $/bu via PULSE_LBS_PER_BU.
+#   crop_key : canonical key shared across provinces (see AB_CROPS)
 # ---------------------------------------------------------------------------
 MVS_COMMODITY_ZONE_MAP: dict[str, dict] = {
-    "Wheat":       {"zones": (BROWN, DARK_BROWN, BLACK), "method": "blend",  "variety": "Hard Red Spring",
+    "Wheat":       {"crop_key": "wheat_spring", "zones": (BROWN, DARK_BROWN, BLACK), "method": "blend",  "variety": "Hard Red Spring",
                     "source_names": ("Spring Wheat", "Hard Red Spring Wheat")},
-    "Canola":      {"zones": (DARK_BROWN,),              "method": "single", "variety": None,
+    "Canola":      {"crop_key": "canola", "zones": (DARK_BROWN,),              "method": "single", "variety": None,
                     "source_names": ("Canola",)},
-    "Durum":       {"zones": (BROWN,),                   "method": "single", "variety": "Amber Durum",
+    "Durum":       {"crop_key": "durum", "zones": (BROWN,),                   "method": "single", "variety": "Amber Durum",
                     "source_names": ("Durum", "Amber Durum", "Durum Wheat")},
-    "Lentils":     {"zones": (BROWN,),                   "method": "single", "variety": "Red Lentils",
+    "Lentils":     {"crop_key": "lentils_red", "zones": (BROWN,),                   "method": "single", "variety": "Red Lentils",
                     "source_names": ("Red Lentils", "Large Red Lentils"), "price_basis": "c/lb"},
-    "Peas":        {"zones": (DARK_BROWN,),              "method": "single", "variety": "Yellow Peas",
+    "Peas":        {"crop_key": "peas_yellow", "zones": (DARK_BROWN,),              "method": "single", "variety": "Yellow Peas",
                     "source_names": ("Yellow Peas", "Edible Yellow Peas"), "price_basis": "c/lb"},
-    "Barley":      {"zones": (DARK_BROWN,),              "method": "single", "variety": "Feed Barley",
+    "Barley":      {"crop_key": "barley_feed", "zones": (DARK_BROWN,),              "method": "single", "variety": "Feed Barley",
                     "source_names": ("Feed Barley",)},
-    "Malt Barley": {"zones": (DARK_BROWN,),              "method": "single", "variety": None,
+    "Malt Barley": {"crop_key": "barley_malt", "zones": (DARK_BROWN,),              "method": "single", "variety": None,
                     "source_names": ("Malt Barley",)},
-    "Oats":        {"zones": (BLACK,),                   "method": "single", "variety": None,
+    "Oats":        {"crop_key": "oats", "zones": (BLACK,),                   "method": "single", "variety": None,
                     "source_names": ("Oats",)},
-    "Flax":        {"zones": (DARK_BROWN,),              "method": "single", "variety": None,
+    "Flax":        {"crop_key": "flax", "zones": (DARK_BROWN,),              "method": "single", "variety": None,
                     "source_names": ("Flax",)},
-    "Rye":         {"zones": (BROWN, DARK_BROWN),        "method": "blend",  "variety": "Hybrid Fall Rye",
+    "Rye":         {"crop_key": "rye_hybrid_fall", "zones": (BROWN, DARK_BROWN),        "method": "blend",  "variety": "Hybrid Fall Rye",
                     "source_names": ("Hybrid Fall Rye",)},
-    "Soybeans":    {"zones": (BLACK,),                   "method": "single", "variety": None,
+    "Soybeans":    {"crop_key": "soybeans", "zones": (BLACK,),                   "method": "single", "variety": None,
                     "source_names": ("Soybean", "Soybeans")},
 }
 
@@ -160,3 +165,79 @@ def verify_environment(input_dir: Path = INPUT_PDF_DIR) -> dict[int, Path]:
 
 if __name__ == "__main__":
     verify_environment()
+
+
+# ===========================================================================
+# Alberta (AgriProfit$ "Cropping Alternatives" cost of production, 2019-2026)
+# ===========================================================================
+AB_INPUT_PDF_DIR = PROJECT_ROOT / "RPA_AB_Input"
+AB_OUTPUT_DIR = OUTPUT_DIR / "ab"
+AB_INTERMEDIATE_DIR = AB_OUTPUT_DIR / "intermediate"
+AB_OCR_CACHE_DIR = AB_INTERMEDIATE_DIR / "ocr"            # Windows OCR of image-only pages (2019)
+AB_MVS_DIR = AB_OUTPUT_DIR / "mvs"
+AB_RAW_JSON = AB_INTERMEDIATE_DIR / "ab_raw_tables.json"
+AB_OUTPUT_STEM = "ab_historical_cop_2019_2026"
+AB_OUTPUT_JSON = AB_MVS_DIR / f"{AB_OUTPUT_STEM}.json"
+AB_OUTPUT_CSV = AB_MVS_DIR / f"{AB_OUTPUT_STEM}.csv"
+
+# Budget-table zones, keyed as printed in the table titles.
+AB_ZONES = {
+    "black": "Black",
+    "brown": "Brown",
+    "dark_brown": "Dark Brown",
+    "grey_wooded": "Grey-Wooded",
+    "peace": "Peace Region",
+    "irrigated": "Irrigated",
+}
+# Zones averaged (equal weight, where the crop is budgeted) for the AB summary: the same
+# Brown / Dark Brown / Black soils as Saskatchewan. Grey-Wooded, Peace Region and Irrigated
+# are still parsed (output/ab/mvs) but never enter a summary. A crop's own `summary_zones`
+# (AB_CROPS) narrows this further.
+AB_SUMMARY_ZONES = ("brown", "dark_brown", "black")
+AB_BROWN_ZONES = ("brown", "dark_brown")   # durum, red lentils, kabuli chickpeas
+
+
+def ab_summary_zones(crop_key: str) -> tuple[str, ...]:
+    return AB_CROPS[crop_key].get("summary_zones", AB_SUMMARY_ZONES)
+
+# Canonical crop keys. `patterns` match the guide's column headers / table labels
+# (lower-case); first match wins, so more specific patterns come first.
+#   bu_weight : lb per bushel, to convert bu/ac seeding rates to lb/ac
+AB_CROPS: dict[str, dict] = {
+    "wheat_cps":        {"display": "CPS Wheat",           "patterns": (r"\bcps\b",),
+                         "price_basis": "$/bu", "bu_weight": 60},
+    "wheat_spring":     {"display": "Spring Wheat",        "patterns": (r"spring\s+wheat", r"^spring\b"),
+                         "price_basis": "$/bu", "bu_weight": 60},
+    "durum":            {"display": "Durum Wheat",         "patterns": (r"durum",),
+                         "price_basis": "$/bu", "bu_weight": 60,
+                         "summary_zones": AB_BROWN_ZONES},
+    "canola":           {"display": "Argentine HT Canola", "patterns": (r"argentine", r"^canola"),
+                         "price_basis": "$/bu", "bu_weight": 50},
+    "barley_feed":      {"display": "Feed Barley",         "patterns": (r"feed\s+barley",),
+                         "price_basis": "$/bu", "bu_weight": 48},
+    "barley_malt":      {"display": "Malt Barley",         "patterns": (r"malt",),
+                         "price_basis": "$/bu", "bu_weight": 48},
+    "oats":             {"display": "Milling Oats",        "patterns": (r"milling\s+oats", r"^oats"),
+                         "price_basis": "$/bu", "bu_weight": 34},
+    "peas_yellow":      {"display": "Yellow Peas",         "patterns": (r"field\s+pea", r"yellow\s+peas?\b"),
+                         "price_basis": "c/lb", "bu_weight": 60},
+    "lentils_red":      {"display": "Red Lentils",         "patterns": (r"red\s+lentil",),
+                         "price_basis": "c/lb", "bu_weight": 60,
+                         "summary_zones": AB_BROWN_ZONES},
+    "chickpeas_kabuli": {"display": "Kabuli Chickpeas",    "patterns": (r"kabuli", r"^chickpea"),
+                         "price_basis": "c/lb", "bu_weight": 60,
+                         "summary_zones": AB_BROWN_ZONES},
+}
+# Fertilizer $/tonne -> $/lb nutrient uses one standardized N-credit rule for both
+# provinces (input_parser.per_lb): $/lb = ($/tonne / 2,204.62 - N content x $/lb N) / grade.
+# Products, grades and N content per province live in Input_Prices/Input_price_template.csv.
+
+# ===========================================================================
+# Saskatchewan crops with no guide history (live logging from the 2026/27 engine on)
+#   inherits   : SK MVS commodity whose NPKS, chemical and seed baselines it takes
+#   start_year : first engine year; never back-filled into the historical MVS
+# ===========================================================================
+SK_EXTRA_CROPS: dict[str, dict] = {
+    "CPS Wheat": {"crop_key": "wheat_cps", "display": "CPS Wheat", "variety": "CPS / CNHR (high-yield class)",
+                  "inherits": "Wheat", "price_basis": "$/bu", "start_year": 2026},
+}

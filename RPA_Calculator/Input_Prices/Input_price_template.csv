@@ -1,5 +1,9 @@
 Province,Nutrient Line,Standard Benchmark Product,Retail Quote Unit,Unit Conversion Factor,Net Price Vector ($/lb)
 SK,Nitrogen ($N$),Urea ($46\text{-}0\text{-}0$),$\$ / \text{tonne}$,"$\div 2,204.62 \div 0.46$","e.g., $\$0.75 / \text{lb } N$"
-SK,Phosphate ($P$),MAP ($11\text{-}52\text{-}0$),$\$ / \text{tonne}$,"$\div 2,204.62 \div 0.52$","e.g., $\$0.65 / \text{lb } P_2O_5$"
+SK,Phosphate ($P$),MAP ($11\text{-}52\text{-}0$),$\$ / \text{tonne}$,"$(\div 2,204.62 - 0.11 \times \$N) \div 0.52$","e.g., $\$0.65 / \text{lb } P_2O_5$"
 SK,Potash ($K$),Potash ($0\text{-}0\text{-}60$),$\$ / \text{tonne}$,"$\div 2,204.62 \div 0.60$","e.g., $\$0.45 / \text{lb } K_2O$"
-SK,Sulphur ($S$),Ammonium Sulfate ($21\text{-}0\text{-}0\text{-}24S$),$\$ / \text{tonne}$,"$\div 2,204.62 \div 0.24$","e.g., $\$0.50 / \text{lb } S$"
+SK,Sulphur ($S$),Ammonium Sulfate ($21\text{-}0\text{-}0\text{-}24S$),$\$ / \text{tonne}$,"$(\div 2,204.62 - 0.21 \times \$N) \div 0.24$","e.g., $\$0.50 / \text{lb } S$"
+AB,Nitrogen ($N$),Urea ($46\text{-}0\text{-}0$),$\$ / \text{tonne}$,"$\div 2,204.62 \div 0.46$","e.g., $\$0.82 / \text{lb } N$"
+AB,Phosphate ($P$),MAP ($11\text{-}52\text{-}0$),$\$ / \text{tonne}$,"$(\div 2,204.62 - 0.11 \times \$N) \div 0.52$","e.g., $\$0.92 / \text{lb } P_2O_5$"
+AB,Potash ($K$),Potash ($0\text{-}0\text{-}60$),$\$ / \text{tonne}$,"$\div 2,204.62 \div 0.60$","e.g., $\$0.52 / \text{lb } K_2O$"
+AB,Sulphur ($S$),Ammonium Sulfate ($20.5\text{-}0\text{-}0\text{-}24S$),$\$ / \text{tonne}$,"$(\div 2,204.62 - 0.205 \times \$N) \div 0.24$","e.g., $\$0.48 / \text{lb } S$"
