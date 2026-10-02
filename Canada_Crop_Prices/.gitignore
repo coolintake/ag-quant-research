@@ -1,0 +1,6 @@
+# Derived stores; rebuild with: python ingest.py --reload-raw --export-parquet
+data/*.duckdb
+data/*.duckdb.wal
+data/parquet/
+__pycache__/
+.pytest_cache/
