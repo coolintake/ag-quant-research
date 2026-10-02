@@ -20,6 +20,8 @@ DATA_DIR: Final[Path] = PROJECT_ROOT / "data"
 RAW_DIR: Final[Path] = DATA_DIR / "raw"
 PARQUET_DIR: Final[Path] = DATA_DIR / "parquet"
 DUCKDB_PATH: Final[Path] = DATA_DIR / "crop_prices.duckdb"
+# Historical PDQ website exports (pdq-export-*.csv) read by backfill_pdq.py.
+INPUT_DIR: Final[Path] = PROJECT_ROOT / "input"
 
 # Raw snapshot naming: data/raw/YYYY-MM-DD_pdq.json. A second, different PDQ
 # import on the same day is kept as data/raw/YYYY-MM-DD_HHMM_pdq.json.
@@ -90,6 +92,10 @@ PDQ_COMMODITY_MAP: Final[dict[str, str]] = {
     "1 CPSR 11.5": "CPSR",
 }
 
+# PDQ commodities quoted as flat prices with no futures basis. PDQ reports
+# their basis as 0.00, which is stored as NULL rather than a real zero basis.
+ZERO_BASIS_IS_NULL_COMMODITIES: Final[frozenset[str]] = frozenset({"1 CWAD 13.0", "2 YELLOW PEAS"})
+
 # Every crop symbol allowed in unified_cash_prices -> kilograms per bushel.
 # Used to derive the missing unit when a manual CSV supplies only $/t or $/bu.
 # To add a crop, add it here.
@@ -124,6 +130,12 @@ MONTHS: Final[tuple[str, ...]] = (
     "JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
 )
 MONTH_TO_NUM: Final[dict[str, int]] = {m: i for i, m in enumerate(MONTHS, start=1)}
+
+# Standard futures month letter -> delivery month (CME / ICE convention).
+FUTURES_MONTH_CODES: Final[dict[str, str]] = {
+    "F": "JAN", "G": "FEB", "H": "MAR", "J": "APR", "K": "MAY", "M": "JUN",
+    "N": "JUL", "Q": "AUG", "U": "SEP", "V": "OCT", "X": "NOV", "Z": "DEC",
+}
 
 # --------------------------------------------------------------------------- #
 # Pricing windows (model_crop_wallet_step1.md, section 3.2)

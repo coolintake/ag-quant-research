@@ -4,3 +4,6 @@ data/*.duckdb.wal
 data/parquet/
 __pycache__/
 .pytest_cache/
+output/
+# Historical PDQ website exports (re-import with: python backfill_pdq.py)
+input/

@@ -206,7 +206,10 @@ def compute_window_averages(
     def run(start: date, end: date, months: list[str], crops: Sequence[str] | None) -> pd.DataFrame:
         extra, extra_params = _filters(crops)
         sql = _simple_sql(extra) if method == "simple" else _weighted_sql(extra)
-        return db.query_df(sql, [start, end, year, months, *extra_params])
+        part = db.query_df(sql, [start, end, year, months, *extra_params])
+        # Months that are listed but never priced give groups with no quotes;
+        # treat them as absent so the fallback can apply.
+        return part[part["n_obs"] > 0].reset_index(drop=True)
 
     def tag(part: pd.DataFrame, window: str, months: list[str], basis: str) -> pd.DataFrame:
         start, end = bounds[window]

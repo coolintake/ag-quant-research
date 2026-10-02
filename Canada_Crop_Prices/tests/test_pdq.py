@@ -113,6 +113,18 @@ class TestParsing:
         rec = parse_payload(payload).records[1]
         assert (rec.basis_mt, rec.basis_bu) == (-56.81, -1.29)
 
+    def test_durum_zero_basis_is_null(self):
+        snap = _snapshot("2026-09-30 14:30", [
+            _row("S ALTA", "DEC", "1 CWAD 13.0", 300.0, 8.16, basis=0, basis_bu=0),
+            _row("SW SASK", "DEC", "1 CWAD 13.0", 300.0, 8.16, basis=5.0, basis_bu=0.14),
+            _row("PEACE", "OCT", "1 CWRS 13.5", 311.61, 8.48, basis=0, basis_bu=0),
+        ])
+        durum_zero, durum_real, cwrs = snap.records
+        assert durum_zero.ton_price == 300.0
+        assert durum_zero.basis_mt is None and durum_zero.basis_bu is None
+        assert (durum_real.basis_mt, durum_real.basis_bu) == (5.0, 0.14)
+        assert (cwrs.basis_mt, cwrs.basis_bu) == (0.0, 0.0)  # real zero basis kept
+
     @pytest.mark.parametrize(
         ("month", "imported", "expected"),
         [("SEP", datetime(2026, 9, 30), 2026), ("DEC", datetime(2026, 9, 30), 2026),
@@ -482,3 +494,15 @@ class TestTargetMonths:
         assert price_aggregator._parse_args(["--crop-year", "2027"]).months is None
         assert price_aggregator._parse_args(
             ["--crop-year", "2027", "--months", "OCT", "NOV"]).months == ["OCT", "NOV"]
+
+    def test_fallback_when_target_listed_but_unpriced(self, db):
+        # DEC durum is listed but every quote is NULL -> fall back, not a NaN row.
+        db.upsert_pdq_records(_snapshot("2027-01-20 14:30", [
+            _row("NW SASK", "DEC", "1 CWAD 13.0", 0, 0),
+            _row("NW SASK", "OCT", "1 CWAD 13.0", 290, 7.89),
+        ]).records)
+        out = compute_window_averages(db, 2027, windows=["RUN2"])
+        durum = out[out.crop_symbol == "DURUM"]
+        assert len(durum) == 1 and durum.month_basis.iloc[0] == "fallback"
+        assert durum.avg_price_cad_mt.iloc[0] == 290
+        assert out.avg_price_cad_mt.notna().all() and (out.n_obs > 0).all()

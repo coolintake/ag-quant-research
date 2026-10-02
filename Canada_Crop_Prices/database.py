@@ -46,6 +46,19 @@ UNIFIED_COLUMNS: tuple[str, ...] = (
     "price_date", "province", "pdq_zone", "crop_symbol", "source",
     "delivery_month", "delivery_year", "price_cad_mt", "price_cad_bu",
 )
+# Underlying futures contract (from PDQ CSV exports; the live API has none).
+FUTURES_COLUMNS: tuple[str, ...] = ("futures_code", "futures_month", "futures_year")
+_FUTURES_DDL: tuple[tuple[str, str], ...] = (
+    ("futures_code", "VARCHAR"), ("futures_month", "VARCHAR"), ("futures_year", "INTEGER"),
+)
+
+# Key of historical CSV rows: one quote per day, zone, commodity and delivery
+# period. backfill_pdq.py upserts on it, replacing any row with the same key
+# whatever its time of day.
+HISTORY_KEY: tuple[str, ...] = (
+    "quote_date", "zone", "commodity", "delivery_month", "delivery_year",
+)
+
 # Natural key of unified_cash_prices (pdq_zone may be NULL, so no PRIMARY KEY).
 UNIFIED_KEY: tuple[str, ...] = (
     "price_date", "province", "pdq_zone", "crop_symbol", "source",
@@ -73,6 +86,9 @@ CREATE TABLE IF NOT EXISTS {config.RAW_TABLE} (
     ton_price_prev  DOUBLE,
     bus_price_prev  DOUBLE,
     ingested_at     TIMESTAMP NOT NULL,
+    futures_code    VARCHAR,
+    futures_month   VARCHAR,
+    futures_year    INTEGER,
     PRIMARY KEY (imported_at, zone_id, commodity, delivery_month)
 );
 
@@ -85,7 +101,10 @@ CREATE TABLE IF NOT EXISTS {config.UNIFIED_TABLE} (
     delivery_month  VARCHAR NOT NULL,
     delivery_year   INTEGER NOT NULL,
     price_cad_mt    DOUBLE,
-    price_cad_bu    DOUBLE
+    price_cad_bu    DOUBLE,
+    futures_code    VARCHAR,
+    futures_month   VARCHAR,
+    futures_year    INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS pdq_zone_map (
@@ -187,6 +206,10 @@ class PriceDatabase:
 
     def _init_schema(self) -> None:
         self.con.execute(_DDL)
+        # Databases created before the futures columns existed gain them here.
+        for table in (config.RAW_TABLE, config.UNIFIED_TABLE):
+            for name, sql_type in _FUTURES_DDL:
+                self.con.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {name} {sql_type}")
         # Refresh the lookup maps from config so edits there take effect.
         with self.transaction() as con:
             con.execute("DELETE FROM pdq_zone_map")
@@ -246,9 +269,10 @@ class PriceDatabase:
         )
         con.execute(
             f"""
-            INSERT INTO {config.UNIFIED_TABLE} ({", ".join(UNIFIED_COLUMNS)})
+            INSERT INTO {config.UNIFIED_TABLE} ({", ".join(UNIFIED_COLUMNS + FUTURES_COLUMNS)})
             SELECT CAST(r.imported_at AS DATE), z.province, r.zone, c.crop_symbol, 'PDQ',
-                   r.delivery_month, r.delivery_year, r.ton_price, r.bus_price
+                   r.delivery_month, r.delivery_year, r.ton_price, r.bus_price,
+                   r.futures_code, r.futures_month, r.futures_year
             FROM {config.RAW_TABLE} r
             JOIN pdq_zone_map z USING (zone)
             JOIN pdq_commodity_map c USING (commodity)
@@ -266,6 +290,52 @@ class PriceDatabase:
             [dates],
         ).fetchone()
         return int(result[0]) if result else 0
+
+    def upsert_pdq_history(self, frame: pd.DataFrame, ingested_at: datetime | None = None) -> tuple[int, int]:
+        """Upsert historical PDQ rows (from CSV exports) into ``pdq_raw_prices``.
+
+        ``frame`` needs the ``RAW_COLUMNS`` (``ingested_at`` optional) plus
+        ``FUTURES_COLUMNS``. Rows are keyed on ``HISTORY_KEY``: any stored row
+        with the same quote date, zone, commodity and delivery period is
+        replaced, so re-running a backfill never duplicates rows. The PDQ rows
+        of ``unified_cash_prices`` are then rebuilt for the affected dates.
+
+        Returns:
+            (raw rows written, unified PDQ rows rebuilt for the affected dates).
+        """
+        if frame.empty:
+            return 0, 0
+        frame = frame.copy()
+        stamp = ingested_at or datetime.now().replace(microsecond=0)
+        frame["ingested_at"] = frame["ingested_at"].fillna(stamp) if "ingested_at" in frame else stamp
+        cols = list(RAW_COLUMNS + FUTURES_COLUMNS)
+        missing = set(cols) - set(frame.columns)
+        if missing:
+            raise ValueError(f"Missing columns for {config.RAW_TABLE}: {sorted(missing)}")
+        frame = frame[cols]
+        dates = sorted(pd.to_datetime(frame["imported_at"]).dt.date.unique())
+
+        col_list = ", ".join(cols)
+        with self.transaction() as con:
+            con.register("incoming_history", frame)
+            try:
+                con.execute(
+                    f"""
+                    DELETE FROM {config.RAW_TABLE} r USING incoming_history i
+                    WHERE CAST(r.imported_at AS DATE) = CAST(i.imported_at AS DATE)
+                      AND r.zone = i.zone AND r.commodity = i.commodity
+                      AND r.delivery_month = i.delivery_month
+                      AND r.delivery_year = i.delivery_year
+                    """
+                )
+                con.execute(
+                    f"INSERT INTO {config.RAW_TABLE} ({col_list}) "
+                    f"SELECT {col_list} FROM incoming_history"
+                )
+            finally:
+                con.unregister("incoming_history")
+            unified = self._rebuild_unified_pdq(con, dates)
+        return len(frame), unified
 
     def rebuild_unified_pdq_all(self) -> int:
         """Re-derive every PDQ row of ``unified_cash_prices`` from the raw table."""

@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any
@@ -105,6 +106,57 @@ def resolve_delivery_year(delivery_month: str, imported_at: datetime) -> int:
     return imported_at.year if month_num >= imported_at.month else imported_at.year + 1
 
 
+_FUTURES_CODE_RE = re.compile(r"^([A-Z]{1,3})([FGHJKMNQUVXZ])(\d{2}|\d{4})$")
+_EXPORT_MONTH_RE = re.compile(r"^([A-Z]{3})\s*'?\s*(\d{2}|\d{4})$")
+
+
+def parse_futures_code(value: Any) -> tuple[str | None, str | None, int | None]:
+    """Split a futures contract code such as ``RSX25`` into its parts.
+
+    Returns:
+        (futures_code, futures_month, futures_year), e.g.
+        ``("RSX25", "NOV", 2025)``. ``futures_month`` is the 3-letter month
+        the contract letter stands for (``config.FUTURES_MONTH_CODES``). A
+        missing, dashed or unrecognised code returns ``(None, None, None)``.
+    """
+    if value is None:
+        return None, None, None
+    code = str(value).strip().upper()
+    match = _FUTURES_CODE_RE.match(code)
+    if not match:
+        return None, None, None
+    _, letter, year = match.groups()
+    full_year = int(year) if len(year) == 4 else 2000 + int(year)
+    return code, config.FUTURES_MONTH_CODES[letter], full_year
+
+
+def parse_export_month(value: Any) -> tuple[str, int]:
+    """Parse a PDQ export ``MONTH`` cell such as ``JAN '25`` into ``("JAN", 2025)``.
+
+    Raises:
+        ValueError: if the cell is not a recognised month/year.
+    """
+    text = str(value).strip().upper()
+    match = _EXPORT_MONTH_RE.match(text)
+    if not match or match.group(1) not in config.MONTH_TO_NUM:
+        raise ValueError(f"Unrecognised delivery month {value!r}")
+    month, year = match.groups()
+    return month, int(year) if len(year) == 4 else 2000 + int(year)
+
+
+def clean_price(value: Any) -> float | None:
+    """Public form of the price rule: blanks, ``-``, zero and negatives -> ``None``."""
+    return _price_or_none(value)
+
+
+def clean_basis(value: Any, commodity: str) -> float | None:
+    """Basis rule: blanks and ``-`` -> ``None``; zero -> ``None`` for flat-price commodities."""
+    basis = _to_float(value)
+    if basis == 0 and commodity in config.ZERO_BASIS_IS_NULL_COMMODITIES:
+        return None
+    return basis
+
+
 def parse_imported_at(value: Any) -> datetime:
     """Parse PDQ's ``prices_imported_at`` (``YYYY-MM-DD HH:MM``)."""
     if not isinstance(value, str):
@@ -146,6 +198,11 @@ def parse_record(row: dict[str, Any], imported_at: datetime) -> PDQPriceRecord:
     # there is no cash price to anchor it.
     basis_mt = _to_float(row.get("basis")) if ton_price is not None else None
     basis_bu = _to_float(row.get("basis_bushels")) if bus_price is not None else None
+    # Flat-price commodities (e.g. durum) have no futures basis; PDQ's 0.00
+    # there means "not applicable", not a zero basis.
+    if commodity in config.ZERO_BASIS_IS_NULL_COMMODITIES:
+        basis_mt = None if basis_mt == 0 else basis_mt
+        basis_bu = None if basis_bu == 0 else basis_bu
 
     return PDQPriceRecord(
         imported_at=imported_at,
