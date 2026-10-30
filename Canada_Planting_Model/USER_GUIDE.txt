@@ -1,0 +1,61 @@
+USER GUIDE - CANADA_PLANTING_MODEL
+Written in ASD-STE100 Simplified Technical English.
+==========================================================================
+
+1. PURPOSE
+--------------------------------------------------------------------------
+This project compares crop profit with the acres that Prairie farmers plant.
+It has three parts:
+  - src/: resolves PDQ prompt prices for each pricing window (R1, R2, R3).
+  - v2_relative_index_model/: the V2 Relative Cash RPA Index. It indexes
+    each crop margin against CWRS wheat. It makes the Plan-B acreage
+    forecast and scores it against StatCan acres.
+  - StatCan_Planting&Prodn/: loads StatCan seeded-area releases (March
+    and June) into a DuckDB database.
+The archive/ folder holds the old log-log model. Do not use it.
+
+2. HOW TO RUN / REFRESH
+--------------------------------------------------------------------------
+Before you start, refresh Canada_Crop_Prices and RPA_Calculator.
+This model reads their data. It does not change their data.
+  A. Prompt prices (run from this folder):
+       python src/prompt_prices.py
+       python src/plot_prompt_runs.py
+  B. V2 index model (run from v2_relative_index_model/):
+       1. Put the analyst calls in inputs/plan_a_assignments.csv.
+       2. Write one short reason for each call.
+       3. Run the model:
+            python run_v2.py
+  C. StatCan planting data (run from StatCan_Planting&Prodn/):
+       1. Paste the new release into "StatCan Acres & Prodn.xlsx".
+       2. Do a check first. This step writes nothing:
+            python main.py run --dry-run
+       3. Load the data:
+            python main.py run
+       4. Make the March vs June report:
+            python planting_report.py
+To test the code, use this command:
+       python -m pytest tests -q
+
+3. HOW TO VIEW OUTPUTS
+--------------------------------------------------------------------------
+  - Prompt prices: output/reports/*.csv and output/*_prompt_runs_*.png.
+  - V2 workbooks: v2_relative_index_model/output/
+      Prairie_RPA_Acreage_Diagnostic_R1.xlsx, _R2.xlsx, _R3.xlsx
+    Open one workbook for each pricing window.
+    A line above 100 shows that the crop has more profit relative to wheat
+    than usual.
+  - V2 summary: v2_relative_index_model/output/v2_diagnostics.md.
+  - StatCan data: StatCan_Planting&Prodn/data/crop_data.duckdb and
+    reports/Planting_Report_<year>.xlsx.
+  - Quick StatCan queries:
+       python main.py march-vs-june --crop Canola
+
+4. HOW TO ARCHIVE / MAINTENANCE
+--------------------------------------------------------------------------
+  - Close the output workbooks in Excel before you run again.
+    The scripts replace these files.
+  - Keep a copy of the R1-R3 workbooks before each new crop year.
+  - Put old model versions in archive/. Do not delete them.
+  - Each new crop year, check the years and windows in the config files.
+  - Read SPECIFICATION_V2.md before you change the V2 method.

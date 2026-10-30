@@ -1,0 +1,185 @@
+province,year,crop,seed,fertilizer,chemical,budget_price,guide_yield,guide_unit_price,zones,source,variable_cost
+AB,2019,BARLEY,23.570000000000004,64.7,18.71,4.116666666666666,66.33333333333333,4.116666666666666,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),106.98000000000002
+AB,2020,BARLEY,21.459999999999997,51.0,18.733333333333334,4.316666666666666,67.0,4.316666666666666,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),91.19333333333333
+AB,2021,BARLEY,27.083333333333332,69.83333333333333,18.746666666666666,5.883333333333333,67.0,5.883333333333333,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),115.66333333333333
+AB,2022,BARLEY,34.376666666666665,123.16666666666667,30.41,7.283333333333334,66.66666666666667,7.283333333333334,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),187.95333333333335
+AB,2023,BARLEY,35.31333333333333,103.83333333333333,30.23,7.083333333333333,66.66666666666667,7.083333333333333,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),169.37666666666664
+AB,2024,BARLEY,27.083333333333332,79.66666666666667,28.133333333333336,6.349999999999999,66.66666666666667,6.349999999999999,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),134.88333333333333
+AB,2025,BARLEY,24.28333333333333,77.16666666666667,26.850000000000005,5.56,66.66666666666667,5.56,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),128.3
+AB,2026,BARLEY,20.43666666666667,85.51109508989266,22.87,5.349999999999999,67.0,5.349999999999999,,RPA_Master_Calculator.xlsx RPA_Summary_AB ($/bu · ¢/lb†),128.81776175655932
+AB,2019,CANOLA,66.25333333333333,83.975,31.98,10.5,37.0,10.5,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),182.20833333333331
+AB,2020,CANOLA,55.65,67.0,30.83666666666667,10.5,37.0,10.5,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),153.48666666666668
+AB,2021,CANOLA,68.89999999999999,87.33333333333333,30.563333333333333,13.450000000000001,37.0,13.450000000000001,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),186.79666666666665
+AB,2022,CANOLA,74.2,153.16666666666666,40.92666666666667,16.4,37.0,16.4,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),268.29333333333335
+AB,2023,CANOLA,79.46666666666667,129.0,40.61666666666667,17.0,37.0,17.0,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),249.08333333333334
+AB,2024,CANOLA,79.46666666666667,99.0,36.190000000000005,14.63,37.0,14.63,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),214.65666666666667
+AB,2025,CANOLA,81.11666666666666,99.0,33.04,13.04,37.0,13.04,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),213.15666666666667
+AB,2026,CANOLA,81.55333333333333,108.10055625989719,26.86,14.0,37.0,14.0,,RPA_Master_Calculator.xlsx RPA_Summary_AB ($/bu · ¢/lb†),216.51388959323054
+AB,2019,CWRS,31.50333333333333,59.1,47.44,6.5,47.333333333333336,6.5,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),138.04333333333332
+AB,2020,CWRS,23.959999999999997,46.833333333333336,35.62,6.7,49.0,6.7,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),106.41333333333333
+AB,2021,CWRS,28.646666666666665,64.0,36.36000000000001,7.383333333333333,49.0,7.383333333333333,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),129.00666666666666
+AB,2022,CWRS,45.10333333333333,112.83333333333333,50.03333333333333,9.5,49.666666666666664,9.5,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),207.97
+AB,2023,CWRS,45.626666666666665,95.16666666666667,58.46333333333334,10.549999999999999,49.666666666666664,10.549999999999999,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),199.2566666666667
+AB,2024,CWRS,33.54333333333334,73.16666666666667,59.343333333333334,8.756666666666668,49.666666666666664,8.756666666666668,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),166.05333333333334
+AB,2025,CWRS,32.47666666666667,70.83333333333333,58.68666666666667,7.713333333333334,49.666666666666664,7.713333333333334,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),161.99666666666667
+AB,2026,CWRS,30.0,78.50148290495302,53.69,7.666666666666667,50.0,7.666666666666667,,RPA_Master_Calculator.xlsx RPA_Summary_AB ($/bu · ¢/lb†),162.19148290495303
+AB,2019,DURUM,25.0,46.025,47.870000000000005,6.725,40.5,6.725,"brown, dark_brown",RPA_Calculator normalized history (mvs),118.89500000000001
+AB,2020,DURUM,33.0,40.75,35.37,6.725,40.5,6.725,"brown, dark_brown",RPA_Calculator normalized history (mvs),109.12
+AB,2021,DURUM,31.0,55.75,36.03,7.324999999999999,40.5,7.324999999999999,"brown, dark_brown",RPA_Calculator normalized history (mvs),122.78
+AB,2022,DURUM,56.0,98.0,49.71,10.95,41.5,10.95,"brown, dark_brown",RPA_Calculator normalized history (mvs),203.71
+AB,2023,DURUM,49.0,82.75,57.74,11.25,41.5,11.25,"brown, dark_brown",RPA_Calculator normalized history (mvs),189.49
+AB,2024,DURUM,41.0,63.75,58.6,10.48,41.5,10.48,"brown, dark_brown",RPA_Calculator normalized history (mvs),163.35
+AB,2025,DURUM,38.8,61.75,57.9,8.71,41.5,8.71,"brown, dark_brown",RPA_Calculator normalized history (mvs),158.45
+AB,2026,DURUM,36.52,68.49095540289686,52.89,7.9,42.0,7.9,,RPA_Master_Calculator.xlsx RPA_Summary_AB ($/bu · ¢/lb†),157.90095540289684
+AB,2019,LENTILS,18.0,15.975,62.849999999999994,0.19,1512.5,0.19,"brown, dark_brown",RPA_Calculator normalized history (mvs),96.82499999999999
+AB,2020,LENTILS,18.0,13.0,62.849999999999994,0.19,1512.5,0.19,"brown, dark_brown",RPA_Calculator normalized history (mvs),93.85
+AB,2021,LENTILS,21.0,19.25,62.849999999999994,0.245,1512.5,0.245,"brown, dark_brown",RPA_Calculator normalized history (mvs),103.1
+AB,2022,LENTILS,36.0,27.25,87.85,0.345,1512.5,0.345,"brown, dark_brown",RPA_Calculator normalized history (mvs),151.1
+AB,2023,LENTILS,33.6,26.25,87.85,0.28,1512.5,0.28,"brown, dark_brown",RPA_Calculator normalized history (mvs),147.7
+AB,2024,LENTILS,30.0,21.5,87.85,0.44,1512.5,0.44,"brown, dark_brown",RPA_Calculator normalized history (mvs),139.35
+AB,2025,LENTILS,30.0,21.5,87.85,0.31,1512.5,0.31,"brown, dark_brown",RPA_Calculator normalized history (mvs),139.35
+AB,2026,LENTILS,29.4,24.852876988121235,60.35,0.23,1513.0,0.23,,RPA_Master_Calculator.xlsx RPA_Summary_AB ($/bu · ¢/lb†),114.60287698812124
+AB,2019,OATS,24.069999999999997,47.0,14.799999999999999,3.2533333333333334,76.33333333333333,3.2533333333333334,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),85.86999999999999
+AB,2020,OATS,13.46,40.833333333333336,14.323333333333332,3.35,77.0,3.35,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),68.61666666666667
+AB,2021,OATS,23.399999999999995,56.666666666666664,12.520000000000001,4.3,77.0,4.3,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),92.58666666666666
+AB,2022,OATS,62.4,98.83333333333333,21.22,6.683333333333334,77.0,6.683333333333334,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),182.45333333333332
+AB,2023,OATS,49.73,83.0,22.31,4.733333333333333,77.0,4.733333333333333,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),155.04
+AB,2024,OATS,42.9,64.66666666666667,21.21,5.11,77.0,5.11,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),128.77666666666667
+AB,2025,OATS,42.9,62.5,21.570000000000004,4.65,77.0,4.65,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),126.97000000000001
+AB,2026,OATS,39.68,69.4029110268052,15.79,3.6,77.0,3.6,,RPA_Master_Calculator.xlsx RPA_Summary_AB ($/bu · ¢/lb†),124.87291102680518
+AB,2019,Y_PEAS,42.473333333333336,22.91,40.07,7.0,2980.0,0.11666666666666667,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),105.45333333333335
+AB,2020,Y_PEAS,40.63333333333333,17.833333333333332,37.02666666666667,7.0,2980.0,0.11666666666666667,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),95.49333333333334
+AB,2021,Y_PEAS,40.63333333333333,24.333333333333332,39.44,9.0,2980.0,0.15,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),104.40666666666667
+AB,2022,Y_PEAS,85.86666666666667,38.0,47.48,11.9,2980.0,0.19833333333333333,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),171.34666666666666
+AB,2023,Y_PEAS,70.91666666666667,36.333333333333336,51.77,11.0,2980.0,0.18333333333333332,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),159.02
+AB,2024,Y_PEAS,70.91666666666667,27.833333333333332,50.09,8.71,2980.0,0.1451666666666667,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),148.84
+AB,2025,Y_PEAS,69.51666666666667,27.5,47.45000000000001,8.98,2980.0,0.14966666666666667,"black, brown, dark_brown",RPA_Calculator normalized history (mvs),144.46666666666667
+AB,2026,Y_PEAS,44.71,31.67131897748689,41.08,7.599999999999996,2980.0,0.1266666666666666,,RPA_Master_Calculator.xlsx RPA_Summary_AB ($/bu · ¢/lb†),117.4613189774869
+MB,2019,BARLEY,15.0,55.62080926078102,39.0,4.1,73.0,4.1,Province-Wide,RPA_Calculator normalized history (mvs),109.62080926078102
+MB,2020,BARLEY,15.0,50.16708227245045,43.89,4.0,80.0,4.0,Province-Wide,RPA_Calculator normalized history (mvs),109.05708227245044
+MB,2021,BARLEY,18.0,62.53380236035176,51.5,4.75,80.0,4.75,Province-Wide,RPA_Calculator normalized history (mvs),132.03380236035176
+MB,2022,BARLEY,28.0,120.80212855728784,53.75,6.5,78.0,6.5,Province-Wide,RPA_Calculator normalized history (mvs),202.55212855728786
+MB,2023,BARLEY,29.0,133.54292942783397,59.5,7.25,78.0,7.25,Province-Wide,RPA_Calculator normalized history (mvs),222.04292942783397
+MB,2024,BARLEY,24.0,93.08290595069442,50.13,6.25,78.0,6.25,Province-Wide,RPA_Calculator normalized history (mvs),167.21290595069442
+MB,2025,BARLEY,20.0,84.73379109754991,27.5,4.5,80.0,4.5,Province-Wide,RPA_Calculator normalized history (mvs),132.2337910975499
+MB,2026,BARLEY,18.0,99.47811817977127,18.0,4.25,80.0,4.25,,RPA_Master_Calculator.xlsx RPA_Summary_MB ($/bu · ¢/lb†),135.4781181797713
+MB,2019,CANOLA,62.5,89.0639196736728,30.66,11.0,40.0,11.0,Province-Wide,RPA_Calculator normalized history (mvs),182.22391967367278
+MB,2020,CANOLA,62.5,80.731939556466,30.66,10.5,42.0,10.5,Province-Wide,RPA_Calculator normalized history (mvs),173.89193955646599
+MB,2021,CANOLA,67.5,88.15902761960633,30.91,11.25,45.0,11.25,Province-Wide,RPA_Calculator normalized history (mvs),186.56902761960632
+MB,2022,CANOLA,67.5,166.44004915172772,46.38,16.5,43.0,16.5,Province-Wide,RPA_Calculator normalized history (mvs),280.32004915172774
+MB,2023,CANOLA,77.5,184.0265001848047,66.27,17.0,44.0,17.0,Province-Wide,RPA_Calculator normalized history (mvs),327.7965001848047
+MB,2024,CANOLA,80.0,142.09682306549493,66.76,15.75,45.0,15.75,Province-Wide,RPA_Calculator normalized history (mvs),288.85682306549495
+MB,2025,CANOLA,82.5,128.36473109809572,58.5,13.25,45.0,13.25,Province-Wide,RPA_Calculator normalized history (mvs),269.3647310980957
+MB,2026,CANOLA,82.5,150.30094501394063,68.75,14.25,45.0,14.25,,RPA_Master_Calculator.xlsx RPA_Summary_MB ($/bu · ¢/lb†),301.55094501394063
+MB,2019,CWRS,24.0,70.88614788699604,47.33,6.75,55.0,6.75,Province-Wide,RPA_Calculator normalized history (mvs),142.21614788699605
+MB,2020,CWRS,24.0,63.78928178891233,47.0,6.75,59.0,6.75,Province-Wide,RPA_Calculator normalized history (mvs),134.78928178891232
+MB,2021,CWRS,29.0,76.89746342802832,47.23,6.75,61.0,6.75,Province-Wide,RPA_Calculator normalized history (mvs),153.1274634280283
+MB,2022,CWRS,32.5,148.578979867532,53.17,9.75,61.0,9.75,Province-Wide,RPA_Calculator normalized history (mvs),234.248979867532
+MB,2023,CWRS,34.0,164.1137371221804,55.33,10.5,64.0,10.5,Province-Wide,RPA_Calculator normalized history (mvs),253.44373712218038
+MB,2024,CWRS,36.0,124.43675035512648,61.81,9.25,65.0,9.25,Province-Wide,RPA_Calculator normalized history (mvs),222.2467503551265
+MB,2025,CWRS,34.0,113.06977594519662,55.25,8.0,65.0,8.0,Province-Wide,RPA_Calculator normalized history (mvs),202.31977594519662
+MB,2026,CWRS,32.0,132.8948432195915,50.25,7.75,66.0,7.75,,RPA_Master_Calculator.xlsx RPA_Summary_MB ($/bu · ¢/lb†),215.1448432195915
+MB,2019,FLAX,22.8,53.16461091524703,33.629999999999995,12.75,24.0,12.75,Province-Wide,RPA_Calculator normalized history (mvs),109.59461091524703
+MB,2020,FLAX,22.8,47.84196134168424,35.129999999999995,12.0,25.0,12.0,Province-Wide,RPA_Calculator normalized history (mvs),105.77196134168423
+MB,2021,FLAX,25.2,38.44074134149725,35.129999999999995,14.0,25.0,14.0,Province-Wide,RPA_Calculator normalized history (mvs),98.77074134149724
+MB,2022,FLAX,64.96,73.43006532544574,36.51,22.5,24.0,22.5,Province-Wide,RPA_Calculator normalized history (mvs),174.90006532544572
+MB,2023,FLAX,64.96,80.94971531948819,38.25,23.0,25.0,23.0,Province-Wide,RPA_Calculator normalized history (mvs),184.15971531948819
+MB,2024,FLAX,64.0,62.46486880130657,32.26,16.0,25.0,16.0,Province-Wide,RPA_Calculator normalized history (mvs),158.72486880130657
+MB,2025,FLAX,56.0,58.56656702283252,33.5,16.0,25.0,16.0,Province-Wide,RPA_Calculator normalized history (mvs),148.06656702283252
+MB,2026,FLAX,32.0,68.5058866165922,36.0,15.0,29.0,15.0,,RPA_Master_Calculator.xlsx RPA_Summary_MB ($/bu · ¢/lb†),136.5058866165922
+MB,2019,OATS,18.13,50.70841256971304,19.5,3.35,105.0,3.35,Province-Wide,RPA_Calculator normalized history (mvs),88.33841256971304
+MB,2020,OATS,18.13,45.51684041091804,19.630000000000003,3.75,105.0,3.75,Province-Wide,RPA_Calculator normalized history (mvs),83.27684041091806
+MB,2021,OATS,19.38,57.42173307836266,19.630000000000003,3.75,110.0,3.75,Province-Wide,RPA_Calculator normalized history (mvs),96.43173307836267
+MB,2022,OATS,35.0,107.40894587043688,23.25,5.75,110.0,5.75,Province-Wide,RPA_Calculator normalized history (mvs),165.65894587043687
+MB,2023,OATS,30.0,119.38130042992296,22.5,5.0,120.0,5.0,Province-Wide,RPA_Calculator normalized history (mvs),171.88130042992296
+MB,2024,OATS,25.0,91.20748273160926,23.130000000000003,5.0,115.0,5.0,Province-Wide,RPA_Calculator normalized history (mvs),139.33748273160927
+MB,2025,OATS,25.0,87.78370096818993,24.5,4.1,120.0,4.1,Province-Wide,RPA_Calculator normalized history (mvs),137.28370096818992
+MB,2026,OATS,23.13,102.48882963048275,20.75,4.25,120.0,4.25,,RPA_Master_Calculator.xlsx RPA_Summary_MB ($/bu · ¢/lb†),146.36882963048276
+MB,2019,SOYBEANS,95.1,21.762180976316195,10.67,11.0,38.0,11.0,Province-Wide,RPA_Calculator normalized history (mvs),127.53218097631618
+MB,2020,SOYBEANS,95.1,17.286863173588223,10.0,10.5,37.0,10.5,Province-Wide,RPA_Calculator normalized history (mvs),122.38686317358821
+MB,2021,SOYBEANS,93.38,23.88150944086229,10.47,11.4,37.0,11.4,Province-Wide,RPA_Calculator normalized history (mvs),127.73150944086228
+MB,2022,SOYBEANS,97.1,47.3107511799338,19.33,13.5,35.0,13.5,Province-Wide,RPA_Calculator normalized history (mvs),163.7407511799338
+MB,2023,SOYBEANS,97.1,52.91965284707732,16.67,16.0,36.0,16.0,Province-Wide,RPA_Calculator normalized history (mvs),166.6896528470773
+MB,2024,SOYBEANS,90.0,42.2339537144944,23.58,15.25,38.0,15.25,Province-Wide,RPA_Calculator normalized history (mvs),155.8139537144944
+MB,2025,SOYBEANS,90.0,44.01054206007485,21.75,12.0,40.0,12.0,Province-Wide,RPA_Calculator normalized history (mvs),155.76054206007484
+MB,2026,SOYBEANS,90.0,43.4235566544674,23.25,12.75,42.0,12.75,,RPA_Master_Calculator.xlsx RPA_Summary_MB ($/bu · ¢/lb†),156.6735566544674
+MB,2019,Y_PEAS,30.25,16.321635732237148,29.25,7.0,2400.0,0.11666666666666667,Province-Wide,RPA_Calculator normalized history (mvs),75.82163573223716
+MB,2020,Y_PEAS,35.06,12.965147380191167,34.25,7.0,2580.0,0.11666666666666667,Province-Wide,RPA_Calculator normalized history (mvs),82.27514738019117
+MB,2021,Y_PEAS,50.49,18.81833209625056,34.25,8.0,2760.0,0.13333333333333333,Province-Wide,RPA_Calculator normalized history (mvs),103.55833209625057
+MB,2022,Y_PEAS,88.0,30.748644442738613,69.67,11.0,2820.0,0.18333333333333332,Province-Wide,RPA_Calculator normalized history (mvs),188.4186444427386
+MB,2023,Y_PEAS,88.0,34.01977683026399,73.63,13.0,2880.0,0.21666666666666667,Province-Wide,RPA_Calculator normalized history (mvs),195.649776830264
+MB,2024,Y_PEAS,88.0,28.131738532718305,46.0,9.5,3000.0,0.15833333333333333,Province-Wide,RPA_Calculator normalized history (mvs),162.13173853271832
+MB,2025,Y_PEAS,85.0,29.832727374231503,42.75,8.75,3300.0,0.14583333333333334,Province-Wide,RPA_Calculator normalized history (mvs),157.5827273742315
+MB,2026,Y_PEAS,49.5,28.825525988006515,42.5,6.0,3300.0,0.1,,RPA_Master_Calculator.xlsx RPA_Summary_MB ($/bu · ¢/lb†),120.82552598800652
+SK,2019,BARLEY,25.8,74.74,38.93,3.94,85.866667,3.94,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),139.47
+SK,2020,BARLEY,28.66,62.083333,39.71,3.94,83.466667,3.94,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),130.45333300000001
+SK,2021,BARLEY,28.446667,62.996667,54.096667,4.37,86.666667,4.37,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),145.54000100000002
+SK,2022,BARLEY,29.276667,143.556667,52.27,5.5,79.3,5.5,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),225.10333400000002
+SK,2023,BARLEY,43.486667,121.37,65.77,6.16,71.966667,6.16,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),230.626667
+SK,2024,BARLEY,37.82,88.25,60.39,5.3,71.5,5.3,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),186.45999999999998
+SK,2025,BARLEY,34.496667,88.473333,78.88,4.81,73.9,4.81,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),201.85
+SK,2026,BARLEY,32.453333,97.66641789093012,52.41,5.03,74.0,5.03,,RPA_Master_Calculator.xlsx RPA_Summary_SK ($/bu · ¢/lb†),182.5297508909301
+SK,2019,CANOLA,66.19,100.973333,60.746667,11.59,50.466667,11.59,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),227.91
+SK,2020,CANOLA,75.19,87.42,95.443333,10.7,50.866667,10.7,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),258.053333
+SK,2021,CANOLA,79.55,86.45,100.456667,11.25,52.02,11.25,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),266.456667
+SK,2022,CANOLA,84.73,185.806667,72.833333,17.01,46.886667,17.01,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),343.37
+SK,2023,CANOLA,88.75,155.913333,82.593333,17.61,42.33,17.61,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),327.256666
+SK,2024,CANOLA,94.05,116.46,91.15,16.06,42.333333,16.06,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),301.65999999999997
+SK,2025,CANOLA,95.85,122.02,86.0,13.0,44.333333,13.0,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),303.87
+SK,2026,CANOLA,93.35,103.23703244452823,87.183333,13.2,43.0,13.2,,RPA_Master_Calculator.xlsx RPA_Summary_SK ($/bu · ¢/lb†),283.77036544452824
+SK,2019,CWRS,27.976667,77.286667,69.33,6.75,58.766667,6.75,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),174.59333399999997
+SK,2020,CWRS,30.97,60.406667,63.16,6.42,53.533333,6.42,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),154.536667
+SK,2021,CWRS,29.48,66.673333,107.876667,6.04,60.866667,6.04,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),204.03
+SK,2022,CWRS,28.046667,155.543333,101.143333,10.56,56.566667,10.56,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),284.73333299999996
+SK,2023,CWRS,34.253333,136.316667,100.986667,10.15,53.3,10.15,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),271.556667
+SK,2024,CWRS,30.773333,98.393333,107.053333,8.44,52.9,8.44,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),236.21999899999997
+SK,2025,CWRS,27.353333,98.883333,123.583333,6.87,54.8,6.87,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),249.819999
+SK,2026,CWRS,25.786667,109.36417353495837,84.683333,7.0,55.0,7.0,,RPA_Master_Calculator.xlsx RPA_Summary_SK ($/bu · ¢/lb†),219.83417353495838
+SK,2019,DURUM,32.42,79.955,56.54,6.96,60.85,6.96,"Brown, Dark Brown",RPA_Calculator normalized history (mvs),168.915
+SK,2020,DURUM,38.835,63.53,52.72,6.61,56.75,6.61,"Brown, Dark Brown",RPA_Calculator normalized history (mvs),155.085
+SK,2021,DURUM,38.34,63.485,62.41,7.5,57.85,7.5,"Brown, Dark Brown",RPA_Calculator normalized history (mvs),164.235
+SK,2022,DURUM,48.0,146.595,57.98,12.5,53.3,12.5,"Brown, Dark Brown",RPA_Calculator normalized history (mvs),252.575
+SK,2023,DURUM,40.17,121.99,57.97,12.03,47.6,12.03,"Brown, Dark Brown",RPA_Calculator normalized history (mvs),220.13
+SK,2024,DURUM,42.16,89.34,64.84,11.77,47.95,11.77,"Brown, Dark Brown",RPA_Calculator normalized history (mvs),196.34
+SK,2025,DURUM,34.27,88.79,83.09,9.2,49.3,9.2,"Brown, Dark Brown",RPA_Calculator normalized history (mvs),206.15
+SK,2026,DURUM,30.885,97.06100845870374,44.19,7.84,49.0,7.84,,RPA_Master_Calculator.xlsx RPA_Summary_SK ($/bu · ¢/lb†),172.13600845870374
+SK,2019,FLAX,17.14,60.3,77.846667,12.62,34.633333,12.62,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),155.286667
+SK,2020,FLAX,16.586667,48.476667,89.576667,13.78,32.566667,13.78,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),154.64000099999998
+SK,2021,FLAX,21.486667,49.183333,84.836667,13.97,34.0,13.97,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),155.506667
+SK,2022,FLAX,36.69,109.503333,55.14,20.5,29.533333,20.5,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),201.33333299999998
+SK,2023,FLAX,27.9,90.84,58.5,18.5,26.5,18.5,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),177.24
+SK,2024,FLAX,24.75,67.386667,60.25,15.0,27.3,15.0,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),152.386667
+SK,2025,FLAX,23.85,65.596667,61.79,15.66,27.9,15.66,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),151.23666699999998
+SK,2026,FLAX,21.466667,67.74415456284075,57.773333,16.5,28.0,16.5,,RPA_Master_Calculator.xlsx RPA_Summary_SK ($/bu · ¢/lb†),146.98415456284076
+SK,2019,LENTILS,30.68,15.835,109.91,0.16,2131.0,0.16,"Brown, Dark Brown",RPA_Calculator normalized history (mvs),156.425
+SK,2020,LENTILS,34.24,13.125,87.92,0.2,2128.0,0.2,"Brown, Dark Brown",RPA_Calculator normalized history (mvs),135.285
+SK,2021,LENTILS,40.29,13.26,90.87,0.25,2072.5,0.25,"Brown, Dark Brown",RPA_Calculator normalized history (mvs),144.42000000000002
+SK,2022,LENTILS,40.15,22.65,91.89,0.35,1785.75,0.35,"Brown, Dark Brown",RPA_Calculator normalized history (mvs),154.69
+SK,2023,LENTILS,31.95,22.195,91.2,0.33,1708.6,0.33,"Brown, Dark Brown",RPA_Calculator normalized history (mvs),145.345
+SK,2024,LENTILS,31.15,16.8,92.03,0.3,1642.45,0.3,"Brown, Dark Brown",RPA_Calculator normalized history (mvs),139.98000000000002
+SK,2025,LENTILS,29.37,19.36,113.7,0.3,1668.35,0.3,"Brown, Dark Brown",RPA_Calculator normalized history (mvs),162.43
+SK,2026,LENTILS,25.17,20.410565525986186,103.76,0.22,1642.0,0.22,,RPA_Master_Calculator.xlsx RPA_Summary_SK ($/bu · ¢/lb†),149.3405655259862
+SK,2019,OATS,28.263333,63.94,27.05,3.1,116.966667,3.1,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),119.253333
+SK,2020,OATS,35.393333,49.546667,28.96,3.02,107.4,3.02,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),113.9
+SK,2021,OATS,43.78,51.55,57.596667,3.33,112.4,3.33,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),152.926667
+SK,2022,OATS,51.39,108.85,53.12,6.0,95.533333,6.0,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),213.36
+SK,2023,OATS,41.733333,90.786667,54.096667,5.19,85.6,5.19,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),186.61666699999998
+SK,2024,OATS,41.733333,67.616667,30.78,5.25,87.1,5.25,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),140.13
+SK,2025,OATS,36.506667,65.563333,36.09,4.1,87.466667,4.1,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),138.16
+SK,2026,OATS,35.34,72.50218502076014,36.09,3.79,88.0,3.79,,RPA_Master_Calculator.xlsx RPA_Summary_SK ($/bu · ¢/lb†),143.93218502076013
+SK,2019,SOYBEANS,100.52,17.066667,52.34,10.66,33.333333,10.66,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),169.926667
+SK,2020,SOYBEANS,112.0,14.333333,62.69,10.66,34.033333,10.66,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),189.02333299999998
+SK,2021,SOYBEANS,112.0,14.97,56.99,10.93,34.666667,10.93,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),183.96
+SK,2022,SOYBEANS,100.21,23.85,80.446667,13.38,27.7,13.38,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),204.506667
+SK,2023,SOYBEANS,127.74,21.843333,88.003333,17.2,24.233333,17.2,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),237.58666599999998
+SK,2024,SOYBEANS,120.23,18.393333,98.696667,14.51,25.966667,14.51,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),237.32
+SK,2025,SOYBEANS,121.69,20.25,96.313333,13.24,25.4,13.24,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),238.253333
+SK,2026,SOYBEANS,128.1,25.339379213553226,77.57,13.93,29.0,13.93,,RPA_Master_Calculator.xlsx RPA_Summary_SK ($/bu · ¢/lb†),231.00937921355322
+SK,2019,Y_PEAS,52.68,27.166667,95.47,6.529999800000001,3198.0,0.10883333,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),175.316667
+SK,2020,Y_PEAS,48.89,21.593333,101.81,6.8500002,3064.0,0.11416667,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),172.29333300000002
+SK,2021,Y_PEAS,48.67,23.04,93.013333,7.5,3154.0,0.125,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),164.72333300000003
+SK,2022,Y_PEAS,74.126667,41.19,98.676667,12.0,2850.0,0.2,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),213.993334
+SK,2023,Y_PEAS,62.006667,38.22,105.0,12.0,2580.0,0.2,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),205.226667
+SK,2024,Y_PEAS,59.906667,30.213333,130.09,10.9999998,2558.0,0.18333333,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),220.21
+SK,2025,Y_PEAS,56.8,34.913333,128.376667,10.0000002,2658.0,0.16666667000000002,"Brown, Dark Brown, Black",RPA_Calculator normalized history (mvs),220.09
+SK,2026,Y_PEAS,41.95,37.82159800488702,125.69,7.800000000000001,2626.0,0.13,,RPA_Master_Calculator.xlsx RPA_Summary_SK ($/bu · ¢/lb†),205.46159800488704
