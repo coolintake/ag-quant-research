@@ -14,3 +14,17 @@ __pycache__/
 # auto-update job) is unaffected.
 Workspace_CanadaSD/Outputs/*.xlsx
 Workspace_CanadaSD/**/*_backup_[0-9]*.xlsx
+
+# Run / console logs (all projects)
+*.log
+
+# Matrix_FOB_Prices: regenerated drops and caches (data_drop/history holds recorded snapshots - keep tracked)
+Matrix_FOB_Prices/data_drop/*.csv
+Matrix_FOB_Prices/cache/
+Matrix_FOB_Prices/src/__pycache__/
+Matrix_FOB_Prices/~$*.xlsx
+
+# Kept local: personal / scratch files outside the research projects
+Property_Analysis/
+/CAN_Costing_Input.xlsx
+CIMTD_Analyzer/*_backup_[0-9]*.py

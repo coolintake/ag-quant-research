@@ -34,14 +34,14 @@ jobs:
 
       - name: Run Data Ingestion
         run: |
-          python CGC_Analyzer/run_report.py
+          python CGC_Analyzer/run_report.py --ingest-only
 
       - name: Commit and Push Updated Data
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action Bot"
 
-          git add CGC_Analyzer/gsw_data/
+          git add CGC_Analyzer/data/gsw_data/
 
           if git diff --cached --quiet; then
             echo "No data changes detected. Skipping commit and push."
