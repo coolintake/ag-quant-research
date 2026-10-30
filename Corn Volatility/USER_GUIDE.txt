@@ -1,0 +1,49 @@
+USER GUIDE - CORN VOLATILITY
+Written in ASD-STE100 Simplified Technical English.
+==========================================================================
+
+1. PURPOSE
+--------------------------------------------------------------------------
+This project builds an implied volatility surface for CBOT corn options
+(trading class OZC). It uses the Black-76 model.
+It finds butterfly and calendar arbitrage. It fits a smooth surface and
+shows term structure, smile, skew and residual charts.
+The current engine is in corn_vol_engine/.
+OLD_corn_vol_model/ holds the old version. Do not use it.
+
+2. HOW TO RUN / REFRESH
+--------------------------------------------------------------------------
+Do these steps in corn_vol_engine/:
+  1. Install the packages (one time only):
+       pip install -r requirements.txt
+  2. Open config.py. Make sure that these values are correct:
+       - target_futures_months (for example '202612')
+       - offline_mode
+       - wasde_report_dates (update them each year)
+  3. For live data (offline_mode = False):
+       a. Start Interactive Brokers TWS.
+       b. Make sure that the API is on, on port 7496.
+  4. For saved data (offline_mode = True):
+       The engine reads market_data/corn_options_surface_historical.xlsx.
+  5. Run the engine:
+       python main.py
+On a WASDE report day, the engine stops. This is correct. Run it again
+after the report.
+
+3. HOW TO VIEW OUTPUTS
+--------------------------------------------------------------------------
+  - The charts open in the web browser (Plotly). You can turn, zoom
+    and move the surface charts.
+  - The terminal shows the fit quality and the arbitrage warnings.
+  - The terminal also shows the trade opportunities.
+  - The option data goes to:
+       market_data/corn_options_surface_historical.xlsx
+
+4. HOW TO ARCHIVE / MAINTENANCE
+--------------------------------------------------------------------------
+  - CAUTION: Each run replaces corn_options_surface_historical.xlsx.
+    Before a live run, copy the file to a dated name to keep it.
+    Example: corn_options_surface_2026-10-18.xlsx.
+  - Close the file in Excel before you run the engine.
+  - Update the contract months when a contract expires.
+  - Put retired code in OLD_corn_vol_model/. Do not delete it.

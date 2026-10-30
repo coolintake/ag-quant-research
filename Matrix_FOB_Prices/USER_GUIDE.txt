@@ -1,0 +1,244 @@
+===============================================================================
+                       USER GUIDE: MATRIX FOB CALCULATOR
+===============================================================================
+Document Reference: UG-MFC-001  (Revision B, 2026-10-19)
+Language Standard : ASD-STE100 (Simplified Technical English)
+
+Revision B adds the world data (Hammersmith) sections: 3, 4, 5 and 6.
+
+-------------------------------------------------------------------------------
+1. GENERAL OVERVIEW
+-------------------------------------------------------------------------------
+This directory contains the FOB Pricing Calculator system.
+
+The main user file is:
+  - Matrix_FOB_Calculator.xlsx
+
+The main control files are:
+  - Refresh_FOB.bat (Updates current data)
+  - Save_Snapshot.bat (Saves current data to history)
+
+The folders are:
+  - "src"          : The code files (.py) for the calculator.
+  - "Hammersmith"  : The code files (.py) for the world prices and
+                     ocean freight (Hammersmith report).
+  - "tests"        : The test files for the Hammersmith code.
+  - "data_drop"    : The data files that Excel reads.
+  - "cache"        : Temporary files. The system can make them again.
+
+Do not move or delete the folders "src", "Hammersmith", "cache" and
+"data_drop". These folders keep the system operational.
+
+-------------------------------------------------------------------------------
+2. HOW TO UPDATE THE CALCULATOR (DAILY WORKFLOW)
+-------------------------------------------------------------------------------
+Follow these steps to get the latest prices and foreign exchange (FX) rates:
+
+Step 1: Download the latest PDQ price file (.csv) from the PDQ website.
+        - Put the file in the folder "Canada_Crop_Prices\input".
+        - In that folder, run the command "python backfill_pdq.py".
+        - The system does not get PDQ prices automatically.
+
+Step 2: Save the file "Matrix_FOB_Calculator.xlsx" if it is open.
+
+Step 3: Double-click the file "Refresh_FOB.bat".
+        - A command window opens.
+        - The system reads the PDQ prices and gets Bank of Canada FX rates.
+        - The system gets the latest Hammersmith world report (Section 3).
+        - The system updates the Excel file automatically.
+        - The system does a check of all calculations.
+        - When the window shows "Done", push a key to close the window.
+        - If the window shows "FAILED", read the messages. Do not continue.
+
+Step 4: Open "Matrix_FOB_Calculator.xlsx".
+        - Go to the "Control" tab.
+        - Make sure that the "CHECK" row shows "PASS".
+        - If the PDQ data is old, the "Check" column shows "STALE".
+        - Find the block "World Data (Hammersmith)" below.
+        - Make sure that the CHECK row of this block shows "PASS".
+
+Step 5: Go to the "Manual_Inputs" tab.
+        - Enter cash bids for crops or months that PDQ does not quote
+          (for example: Barley, Soybeans, Lentils).
+        - A manual bid does not replace a PDQ price.
+        - Save the Excel file.
+
+Step 6: Go to the "FOB_Summary" tab.
+        - Select the delivery month from the drop-down menu.
+        - Review the calculated FOB matrices.
+        - A value with a star (*) comes from a manual bid.
+
+-------------------------------------------------------------------------------
+3. HOW THE WEEKLY WORLD DATA UPDATE OPERATES (AUTOMATIC)
+-------------------------------------------------------------------------------
+Hammersmith publishes one world grain report each week, usually on
+Saturday. The report gives:
+  - World FOB prices (US$ per metric ton), for example US Gulf, Black Sea,
+    France, Argentina, Brazil and Australia.
+  - Ocean freight rates (US$ per metric ton) between ports.
+
+You do not have to start the world update. "Refresh_FOB.bat" does it in
+Step 3 of Section 2. The system does these operations:
+
+  1. The system reads the blog feed and gets new posts only.
+  2. The system keeps a copy of each post in "cache\hammersmith\raw".
+  3. The system reads the yellow box (world FOB prices) and the pink box
+     (ocean freight) of each report.
+  4. The system adds the report to the history files in
+     "data_drop\history" (world_fob_history.parquet and
+     world_freight_history.parquet).
+  5. The system writes the latest report to "data_drop\world_fob_latest.csv"
+     and "data_drop\world_freight_latest.csv".
+  6. Excel reads these two files into the tabs "Data_World" and
+     "Data_Freight".
+
+The world update cannot stop the daily update:
+  - If the blog is not available, the system keeps the last world data.
+    The Control tab shows "FETCH_FAILED".
+  - If the newest post has a new layout, the system keeps the last world
+    data. The Control tab shows "PARSE_FAILED".
+  - If there is no new report for more than 9 days, the Control tab shows
+    "STALE". The system continues to use the last report.
+
+Important rules for the world data:
+  - A month between two quoted months gets a calculated (interpolated)
+    price. Excel shows it in grey italic.
+  - A spot price (for example French wheat) is used for the first month
+    of the price window only. Excel shows it with a dagger (†). The later
+    months show "N/A".
+  - A large change (more than 15% in one week) or a value outside the
+    normal range gets the flag "OUTLIER". Excel shows it in red. The
+    system KEEPS this value in all calculations. Make sure that you
+    examine red values before you use them.
+  - The system does not use the Baltic indices or the container index.
+    It uses physical ocean freight rates only.
+
+-------------------------------------------------------------------------------
+4. HOW TO READ THE WORLD TABS
+-------------------------------------------------------------------------------
+"World_FOB_Matrix":
+  - Select the commodity, the zone, the unit, the spread month and the
+    band from the drop-down menus in row 4.
+  - The first table shows the world FOB prices for each delivery month.
+  - The second table shows the Canadian FOB prices for the same months.
+  - The third table shows the spread: Canadian FOB minus world FOB.
+  - Green: Canada is less expensive by the band or more.
+  - Red: Canada is more expensive by the band or more.
+
+"Global_CIF_Matrix":
+  - Select the commodity, the destination, the zone and the month.
+  - The first table shows FOB + ocean freight = CIF (landed cost).
+  - Vancouver uses the US PNW freight rate. Thunder Bay uses the
+    US Lakes (Duluth) freight rate.
+  - Hammersmith does not give a St. Lawrence freight rate. Thus the CIF
+    for "STL Direct" shows "N/A".
+  - The second table shows Canadian CIF minus competitor CIF.
+
+"FOB_Indications":
+  - This tab shows all world FOB rows of the latest report.
+  - Select a commodity to filter the rows.
+
+"Freight_Rates":
+  - The matrix shows the freight rate that the CIF calculation uses.
+  - The list below shows all freight rows. Use the drop-down menus to
+    filter by origin, destination and vessel.
+
+-------------------------------------------------------------------------------
+5. HOW TO DO A MANUAL OR BACKFILL EXTRACTION (HAMMERSMITH)
+-------------------------------------------------------------------------------
+Usually, you do not have to do this procedure. Use it:
+  - To get a new report before the next daily update.
+  - To load the history again from an earlier date.
+  - After a person changes the Hammersmith code.
+
+Step 1: Open a command window in the folder "Matrix_FOB_Prices".
+
+Step 2: Select the correct command:
+
+        a. To get the new reports only:
+           python Hammersmith\hammersmith_scraper.py
+
+        b. To load all reports from a date (example: 1 January 2019):
+           python Hammersmith\hammersmith_scraper.py --backfill-from 2019-01-01
+           - This operation can take approximately 5 minutes.
+
+        c. To read all saved posts again after a code change
+           (no internet connection is necessary):
+           python Hammersmith\hammersmith_scraper.py --reparse
+
+        d. To make the data files again from the history only
+           (no internet connection is necessary):
+           python Hammersmith\hammersmith_scraper.py --offline
+
+Step 3: Read the last line in the command window.
+        - "OK" at the end of the line: the operation is complete.
+        - Any other status: read the messages above the last line.
+
+Step 4: Double-click "Refresh_FOB.bat" to load the new data into Excel.
+
+To make sure that the Hammersmith code operates correctly, run this
+command in the folder "Matrix_FOB_Prices":
+        python -m pytest tests -q
+        - All tests must show "passed".
+
+-------------------------------------------------------------------------------
+6. PRE-FLIGHT CHECKS
+-------------------------------------------------------------------------------
+Do these checks before you save a snapshot (Section 7) or before you
+repair the workbook (Section 8, item 6):
+
+  1. Save "Matrix_FOB_Calculator.xlsx".
+  2. Close "Matrix_FOB_Calculator.xlsx".
+     - The snapshot reads the SAVED file. Changes that you did not save
+       are not recorded.
+  3. Make sure that the file "~$Matrix_FOB_Calculator.xlsx" is not in the
+     folder "Matrix_FOB_Prices".
+     - Excel makes this file when the workbook is open.
+     - If Excel is closed and the file is in the folder, delete it.
+  4. Do not open the files in "data_drop" while the system operates.
+     An open data file can stop the update ("WRITE_LOCKED").
+
+-------------------------------------------------------------------------------
+7. HOW TO ARCHIVE HISTORICAL DATA
+-------------------------------------------------------------------------------
+Follow these steps to store your active calculations in the historical
+database:
+
+Step 1: Do the pre-flight checks (Section 6).
+
+Step 2: Double-click the file "Save_Snapshot.bat".
+        - A command window opens.
+        - The system reads the current prices and costings.
+        - The system writes the data to the historical database.
+        - When the window shows "Snapshot saved", push a key to close it.
+
+Step 3: Open "Matrix_FOB_Calculator.xlsx" and go to "Historical_Charts".
+        - The new historical records are now available in the chart views.
+
+Note: The Hammersmith world history does not need a snapshot. The daily
+update adds each new report to the history automatically.
+
+-------------------------------------------------------------------------------
+8. HOW TO KEEP THE DIRECTORY CLEAN
+-------------------------------------------------------------------------------
+To keep your workspace organized:
+
+1. Always use "Matrix_FOB_Calculator.xlsx" as your main interface.
+2. Do not delete "Refresh_FOB.bat" or "Save_Snapshot.bat".
+3. Do not change files in "data_drop" or "cache" manually.
+4. Do not delete the folder "data_drop\history". It contains your
+   historical records. The system cannot make the PDQ snapshots again.
+5. If prices or dates are old, double-click "Refresh_FOB.bat".
+   This action loads the data again. It does not repair formulas.
+6. If a formula is broken, do the pre-flight checks (Section 6). Then, in
+   the folder "Matrix_FOB_Prices", run the command
+   "python src\wire_workbook.py".
+   - This action writes all formulas, tabs and data connections again.
+   - The system makes a backup copy in "cache\backup" first.
+   - Your manual bids and your drop-down selections stay in the file.
+7. Keep all Hammersmith code in the folder "Hammersmith". Do not put
+   Hammersmith files in the main folder.
+
+For the calculation logic, read "README_FOB_Logic.md".
+For the world data rules, read "README_FOB_Logic.md", Section 8.
+===============================================================================

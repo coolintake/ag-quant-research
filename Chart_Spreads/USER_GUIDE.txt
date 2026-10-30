@@ -1,0 +1,46 @@
+USER GUIDE - CHART_SPREADS
+Written in ASD-STE100 Simplified Technical English.
+==========================================================================
+
+1. PURPOSE
+--------------------------------------------------------------------------
+This project makes seasonal "spaghetti" charts of futures calendar spreads
+for grains and oilseeds. Each line is one crop year.
+  - Spread = Leg 1 close - Leg 2 close.
+  - The current year is a thick red line. Older years are gray lines.
+  - Grain spreads: Z-H, H-K, K-N, N-Z.
+  - Canola and soybean spreads: H-K, K-N, N-X, X-H.
+The data comes from Barchart daily history files.
+
+2. HOW TO RUN / REFRESH
+--------------------------------------------------------------------------
+  1. Download the new daily history from Barchart.
+     The file must have the columns Date, Symbol and Close.
+     You can use a .csv file, an .xlsx file or a folder of files.
+  2. Put the file in a known folder.
+  3. Open spread_analysis.ipynb in VS Code or Jupyter.
+  4. In section 1, set DATA_PATH to the new file or folder.
+  5. Run all cells (Run All).
+  6. To add a chart, copy one chart section. Then change the root,
+     the two contract months and the years. For example:
+       build_spread(df, "MW", "Z", "H", year_offset=1,
+                    start_year=2010, end_year=2026)
+Install these packages one time only:
+       pip install pandas plotly ipywidgets openpyxl matplotlib
+
+3. HOW TO VIEW OUTPUTS
+--------------------------------------------------------------------------
+  - The charts show in the notebook below each cell.
+  - Move the mouse on a line to see the date and the spread value.
+  - Click a year in the legend to hide or show it.
+  - To keep a chart, use the camera icon in the chart toolbar (PNG).
+  - Section 2 shows a table of the spreads that the data supports.
+
+4. HOW TO ARCHIVE / MAINTENANCE
+--------------------------------------------------------------------------
+  - Keep old Barchart files in a dated folder. Do not delete them.
+  - The notebook does not change the input files.
+  - Before you share the notebook, clear the outputs to make it smaller.
+  - Add new spread pairs in spread_engine.py.
+  - Add new Barchart root names in data_loader.py.
+  - If the project folder moves, change PROJECT_DIR in the first code cell.
