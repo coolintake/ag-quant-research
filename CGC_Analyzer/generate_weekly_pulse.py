@@ -9,8 +9,8 @@ Pipeline
 --------
 1. Data Extractor & Metrics Processor  -> WeeklyPulseEngine (wraps CGCAnalytics)
 2. Objective Rules Engine              -> RulesEngine
-3. Chart Generator (Matplotlib)        -> build_export_pacing_chart()
-4. Commentary (LLM or rule-based)      -> CommentaryWriter
+3. Chart Generator (Matplotlib)        -> build_export_pacing_chart() (Ghost feature image)
+4. Commentary (LLM or rule-based)      -> CommentaryWriter (3-bullet Summary, Lingo_CGCWeeklyReport skill)
 5. HTML render (Jinja2 template)       -> render_report_html()
 6. Ghost Admin API staging (draft)     -> GhostPublisher
 
@@ -29,7 +29,7 @@ DATA SOURCE — SINGLE SOURCE OF TRUTH
 -------------------------------------
 All GSW ingestion, schema normalization, and metric math (deliveries,
 exports/outflow, stocks, capacity utilization) come from the existing
-CGC_Analyzer backend — `cgc_engine.py` / `ingestion.py` / `cgc_reports.py` —
+CGC_Analyzer backend — `core/` (`cgc_engine` / `ingestion` / `cgc_reports`) —
 via the `CGCAnalytics` facade, exactly the way `run_report.py` and `app.py`
 already use it. This script does NOT download or parse raw GSW CSVs itself,
 and does NOT re-implement any of the deliveries/exports/stocks formulas —
@@ -59,10 +59,10 @@ everywhere else in the project.
 from __future__ import annotations
 
 import argparse
-import base64
 import json
 import logging
 import os
+import re
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -91,26 +91,26 @@ log = logging.getLogger("weekly_pulse")
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 
-# Flat-import project convention (see run_report.py / app.py): sibling
-# modules live next to this script, no package/-m flags needed. Make sure
-# they're importable regardless of the current working directory.
+# The shared data layer is the `core` package next to this script; make it
+# importable regardless of the current working directory.
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from cgc_engine import (  # noqa: E402  (path setup must happen first)
+from core.cgc_engine import (  # noqa: E402  (path setup must happen first)
     DEFAULT_CROP_YEARS,
     DEFAULT_CURRENT_YEAR,
     TERMINAL_LOCATIONS,
     to_raw_grain_name,
 )
-from cgc_reports import CGCAnalytics  # noqa: E402
+from core.cgc_reports import CGCAnalytics  # noqa: E402
 
 # Same self-locating-paths convention as run_report.py.
-GSW_DATA_DIR = Path(os.environ.get("CGC_DATA_DIR", SCRIPT_DIR / "gsw_data"))
+DATA_DIR = SCRIPT_DIR / "data"
+GSW_DATA_DIR = Path(os.environ.get("CGC_DATA_DIR", DATA_DIR / "gsw_data"))
 
 
 def _resolve_capacity_path(here: Path) -> Path:
-    """Find CGC_Capacity.(xlsb|xlsx|xls) next to this script, preferring
+    """Find CGC_Capacity.(xlsb|xlsx|xls) in data/, preferring
     .xlsb but accepting whichever extension actually exists — mirrors
     run_report.py's resolution exactly so both entry points find the same
     file without needing separate configuration."""
@@ -121,9 +121,9 @@ def _resolve_capacity_path(here: Path) -> Path:
     return here / "CGC_Capacity.xlsb"
 
 
-CAPACITY_PATH = Path(os.environ.get("CGC_CAPACITY_FILE", _resolve_capacity_path(SCRIPT_DIR)))
+CAPACITY_PATH = Path(os.environ.get("CGC_CAPACITY_FILE", _resolve_capacity_path(DATA_DIR)))
 
-OUTPUT_DIR = SCRIPT_DIR
+OUTPUT_DIR = SCRIPT_DIR / "Outputs" / "weekly_pulse"
 CHART_PATH = OUTPUT_DIR / "export_pacing_chart.png"
 HTML_OUTPUT_PATH = OUTPUT_DIR / "weekly_pulse_report.html"
 JSON_PAYLOAD_PATH = OUTPUT_DIR / "weekly_pulse_payload.json"
@@ -192,27 +192,11 @@ RULE_THRESHOLDS = {
     "high_utilization_pct": 80.0,
 }
 
-# Key market movers get a fixed score boost in signal-highlight ranking so
-# high-volume, market-moving commodities aren't crowded out of the top
-# highlights by thinner-volume commodities whose percentage swings look
-# larger purely because their base tonnage is small. Names here are REPORT
-# display labels (post-WEEKLY_PULSE_LABELS), matching CommodityMetrics.display_name.
-PRIORITY_CROPS: list[str] = ["Canola", "Wheat (excl. Durum)"]
-PRIORITY_CROP_SCORE_BOOST: float = 50.0
-
 # Early crop-year percentages (deliveries/exports YTD vs LY) can swing wildly
 # because the prior-year base itself is tiny in the season's first weeks.
 # weeks 1 through this constant get an asterisk on the Export YTD % column
 # and a footnote explaining why; both disappear from week 11 onward.
 EARLY_SEASON_MAX_WEEK: int = 10
-
-# Key Watch is split into a Western and an Eastern line. Eastern commodities
-# are the two with fundamentally different (US Midwest-linked) demand
-# dynamics than the Western/Prairie crops; everything else is Western.
-EASTERN_COMMODITIES: list[str] = ["Corn", "Soybeans"]
-WESTERN_COMMODITIES: list[str] = [
-    WEEKLY_PULSE_LABELS.get(c, c) for c in WEEKLY_PULSE_COMMODITIES if c not in EASTERN_COMMODITIES
-]
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -254,6 +238,11 @@ class CommodityMetrics:
 
     stocks_kt: Optional[float] = None
     stocks_yoy_pct: Optional[float] = None
+
+    # Same-week last-year volumes behind exports_yoy_pct / stocks_yoy_pct --
+    # the Summary quotes these instead of % changes early in the crop year.
+    ly_ytd_exports_kt: Optional[float] = None
+    stocks_ly_kt: Optional[float] = None
 
     flags: list[str] = field(default_factory=list)
 
@@ -399,6 +388,7 @@ class WeeklyPulseEngine:
 
         ly_cur = self._outflow_slice(raw, ly, wk) if ly else pd.DataFrame()
         ly_ytd_exp = _safe_sum(ly_cur["cum_ktonnes"]) if not ly_cur.empty else None
+        m.ly_ytd_exports_kt = ly_ytd_exp
         m.exports_yoy_pct = _pct_change(ytd_exp, ly_ytd_exp)
 
         five_yr_vals = []
@@ -422,6 +412,7 @@ class WeeklyPulseEngine:
         stocks_now = self._stocks_total(raw, cy, wk)
         stocks_ly = self._stocks_total(raw, ly, wk) if ly else None
         m.stocks_kt = stocks_now
+        m.stocks_ly_kt = stocks_ly
         m.stocks_yoy_pct = _pct_change(stocks_now, stocks_ly)
 
         return m
@@ -649,239 +640,256 @@ def build_export_pacing_chart(series_df: pd.DataFrame, out_path: Path = CHART_PA
     return out_path
 
 
-def build_chart_data_uri(chart_path: Path) -> str:
-    """Reads the chart PNG and returns it as a base64 `data:image/png;base64,...`
-    URI, so the rendered HTML embeds the image directly rather than pointing
-    at a relative file path or a placeholder string that only got swapped
-    in during Ghost publishing. This way the report displays correctly both
-    when pasted straight into Ghost and when the local HTML file is just
-    opened/previewed on its own."""
-    data = Path(chart_path).read_bytes()
-    b64 = base64.b64encode(data).decode("ascii")
-    return f"data:image/png;base64,{b64}"
-
-
 # ══════════════════════════════════════════════════════════════════════════
 # 4. COMMENTARY (LLM or Jinja2/rule-based fallback)
 # ══════════════════════════════════════════════════════════════════════════
 
-FLAG_LABELS = {
-    "SURGING_DELIVERIES": "surging weekly deliveries",
-    "SLOWING_DELIVERIES": "weekly deliveries slowing sharply",
-    "STRONG_EXPORT_PACE": "strong YTD export demand",
-    "WEAK_EXPORT_PACE": "soft YTD export demand",
-    "TIGHTENING_STOCKS": "commercial inventories contracting",
-    "BUILDING_STOCKS": "commercial stocks building",
+# Language skill that governs the Summary's voice: narrative-first, three
+# themed bullets (deliveries & pace / export drivers / logistics), <= 30 words
+# each, and no figures that already appear in the tables below. Kept outside
+# the project so it can be edited alongside the other house-style skills.
+LANGUAGE_SKILL_PATH = Path(os.environ.get(
+    "WEEKLY_PULSE_LANGUAGE_SKILL",
+    SCRIPT_DIR.parent / "Design" / "Language_Skills" / "Lingo_CGCWeeklyReport.md",
+))
+SUMMARY_BULLET_COUNT: int = 3
+SUMMARY_MAX_WORDS: int = 30
+
+# Volume floor (KMT) for naming a commodity as an export outperformer /
+# laggard or a stock mover. Ranking uses absolute KMT shifts in weeks 1 to
+# EARLY_SEASON_MAX_WEEK and YoY % afterwards (both years >= the floor), so a
+# thin base never gets named on the strength of a headline-sized % swing.
+SUMMARY_MIN_BASE_KT: float = 100.0
+
+# Bands that turn the metrics into the skill's qualitative vocabulary.
+DELIVERY_WOW_BAND_PCT: float = 10.0     # |WoW| beyond this = surged / cooled off
+PACE_WELL_BAND_PCT: float = 5.0         # |vs 5-yr| beyond this = "well" ahead / behind
+EXPORT_PACE_BAND_PCT: float = 10.0      # total YTD exports vs LY: strong / soft
+CORRIDOR_IMBALANCE_PTS: float = 15.0    # West - East utilization gap = imbalance
+TIGHTENING_UTIL_PCT: float = 60.0       # West Coast storage "tightening" from here
+
+# Prose names: headline (title case) and in-sentence (lower case) forms.
+NARRATIVE_NAMES: dict[str, tuple[str, str]] = {
+    "Wheat (excl. Durum)": ("Wheat", "non-durum wheat"),
+    "Amber Durum": ("Durum", "durum"),
 }
 
-# A few flag COMBINATIONS read more naturally as one merged phrase than as
-# their individual pieces stitched together -- checked before the general
-# per-dimension builder below.
-_SPECIAL_COMBO_PHRASES: dict[frozenset, str] = {
-    frozenset({"SLOWING_DELIVERIES", "TIGHTENING_STOCKS"}): "both deliveries and inventories contracting sharply",
-    frozenset({"SURGING_DELIVERIES", "BUILDING_STOCKS"}): "both deliveries and inventories building rapidly",
-}
+
+# Plural crop names take plural verbs and drop the 's' before a noun
+# ("lentils continue", "lentil stocks").
+PLURAL_NAMES: set[str] = {"Lentils", "Peas", "Soybeans"}
 
 
-def _delivery_phrase(m: dict) -> Optional[str]:
-    """Never called for Corn/Soybeans -- CGC's licensed primary-elevator
-    delivery data isn't comprehensively tracked for those two in Eastern
-    Canada, so no delivery reference (surging/slowing, WoW/YoY %) should
-    ever appear in their commentary. Enforced in natural_language_summary,
-    not here, so this function's own logic stays simple."""
-    flags, wow = m.get("flags", []), m.get("deliveries_wow_pct")
-    if wow is None:
+def _names(m: dict) -> tuple[str, str]:
+    name = m["display_name"]
+    return NARRATIVE_NAMES.get(name, (name, name.lower()))
+
+
+def _verb(m: dict, singular: str, plural: str) -> str:
+    return plural if m["display_name"] in PLURAL_NAMES else singular
+
+
+def _attributive(m: dict) -> str:
+    prose = _names(m)[1]
+    return prose[:-1] if m["display_name"] in PLURAL_NAMES else prose
+
+
+_CITE_MARKER = re.compile(r"\[cite:[^\]]*\]")
+
+
+def load_language_skill(path: Path = LANGUAGE_SKILL_PATH) -> Optional[str]:
+    """The skill markdown with its '[cite: N]' source markers stripped, or
+    None (logged) if the file is missing -- the rule-based writer below
+    follows the same framework, so the report still builds without it."""
+    try:
+        return _CITE_MARKER.sub("", Path(path).read_text(encoding="utf-8")).strip()
+    except OSError as exc:
+        log.warning(f"Language skill not found at {path} ({exc}); using built-in summary rules.")
         return None
-    if "SURGING_DELIVERIES" in flags:
-        return f"surging weekly deliveries (+{wow:.1f}% WoW)"
-    if "SLOWING_DELIVERIES" in flags:
-        return f"weekly deliveries slowing sharply ({wow:.1f}% WoW)"
-    return None
 
 
-# Corridor-share bands for narrative framing, computed off YTD (cumulative)
-# Terminal Exports rather than a single week's figure, to avoid noisy
-# week-to-week corridor swings. Exact bands as specified: >=85% one way is
-# treated as that corridor essentially alone; between 15% and 85% is "both
-# coasts"; under 5 kt total YTD volume is too thin to characterize at all.
-CORRIDOR_DOMINANT_SHARE: float = 0.85
-CORRIDOR_MIN_MATERIAL_KT: float = 5.0
+# Any number left after removing '5-year' is treated as table duplication.
+_FIGURE = re.compile(r"\d")
 
 
-def _corridor_clause(m: dict) -> str:
-    """The corridor qualifier embedded inside the export phrase itself --
-    'via Eastern corridors', 'via Western corridors', 'across both coasts',
-    or the standalone 'light export activity' when YTD volume is too thin
-    (< 5 kt total) to characterize a corridor at all."""
-    west = m.get("west_export_ytd_kt") or 0.0
-    east = m.get("east_export_ytd_kt") or 0.0
-    total = west + east
-    if total < CORRIDOR_MIN_MATERIAL_KT:
-        return "light export activity"
-    east_share = east / total
-    if east_share >= CORRIDOR_DOMINANT_SHARE:
-        return "via Eastern corridors"
-    if east_share <= (1 - CORRIDOR_DOMINANT_SHARE):
-        return "via Western corridors"
-    return "across both coasts"
+def _check_bullets(bullets: list) -> list[str]:
+    """Enforce the skill's hard rules on a candidate summary."""
+    if not isinstance(bullets, list) or len(bullets) != SUMMARY_BULLET_COUNT:
+        raise ValueError(f"expected {SUMMARY_BULLET_COUNT} summary bullets, got {bullets!r}")
+    out = []
+    for b in bullets:
+        if not isinstance(b, str) or ": " not in b:
+            raise ValueError(f"bullet needs a 'Headline: narrative' form: {b!r}")
+        b = b.strip()
+        if len(b.split()) > SUMMARY_MAX_WORDS:
+            raise ValueError(f"bullet over {SUMMARY_MAX_WORDS} words: {b!r}")
+        if _FIGURE.search(b.replace("5-year", "")):
+            raise ValueError(f"bullet repeats a figure: {b!r}")
+        out.append(b)
+    return out
 
 
-def _export_phrase(m: dict, is_eastern: bool = False) -> Optional[str]:
-    """Eastern commodities (Corn/Soybeans) use 'export demand' as the STRONG
-    verb instead of Western's 'export pull' -- matches the report's Eastern
-    commentary voice, which leans on export/corridor/stocks language only
-    (no deliveries) since that's genuinely where the story is for those two."""
-    flags, yoy = m.get("flags", []), m.get("exports_yoy_pct")
-    if yoy is None:
-        return None
-    clause = _corridor_clause(m)
-    if clause == "light export activity":
-        if "STRONG_EXPORT_PACE" in flags or "WEAK_EXPORT_PACE" in flags:
-            return "light export activity so far this year"
-        return None
-    if "STRONG_EXPORT_PACE" in flags:
-        verb = "demand" if is_eastern else "pull"
-        return f"strong early export {verb} (+{yoy:.1f}% YTD {clause})"
-    if "WEAK_EXPORT_PACE" in flags:
-        return f"soft YTD export demand ({yoy:.1f}% {clause})"
-    return None
+def _fit(*clauses: str) -> str:
+    """Join the first clause with as many optional clauses as fit the word cap."""
+    text = clauses[0]
+    for c in clauses[1:]:
+        if c and len((text + c).split()) <= SUMMARY_MAX_WORDS:
+            text += c
+    return text
 
 
-def _stocks_phrase(m: dict, commercial_prefix: bool = False) -> Optional[str]:
-    """Eastern commentary prefixes 'commercial' onto the stocks/inventories
-    noun (matches the report's Eastern voice, which speaks in terms of
-    export pacing, corridor, and commercial stocks specifically)."""
-    flags, yoy = m.get("flags", []), m.get("stocks_yoy_pct")
-    if yoy is None:
-        return None
-    prefix = "commercial " if commercial_prefix else ""
-    if "BUILDING_STOCKS" in flags:
-        return f"{prefix}stocks elevated vs last year ({yoy:+.1f}%)"
-    if "TIGHTENING_STOCKS" in flags:
-        return f"{prefix}inventories contracting sharply ({yoy:+.1f}% vs LY)"
-    return None
-
-
-def _join_natural(parts: list[str]) -> str:
-    parts = [p for p in parts if p]
-    return ", ".join(parts)
-
-
-def natural_language_summary(m: dict) -> str:
-    """Natural, non-robotic sentence fragment describing why a commodity was
-    flagged -- e.g. 'surging weekly deliveries (+184.3% WoW), strong early
-    export pull (+179.7% YTD across both coasts), stocks elevated vs last
-    year (+54.8%)'. For Corn/Soybeans, delivery references are strictly
-    excluded (see module notes on Eastern primary-delivery data coverage)
-    and the export/stocks phrasing switches to the Eastern voice ('export
-    demand', 'commercial stocks/inventories')."""
-    is_eastern = m.get("display_name") in EASTERN_COMMODITIES
-    flags = frozenset(m.get("flags", []))
-
-    if not is_eastern and flags in _SPECIAL_COMBO_PHRASES:
-        return _SPECIAL_COMBO_PHRASES[flags]
-
-    delivery = None if is_eastern else _delivery_phrase(m)
-    export = _export_phrase(m, is_eastern=is_eastern)
-    stocks = _stocks_phrase(m, commercial_prefix=is_eastern)
-    return _join_natural([delivery, export, stocks])
+def _ranked_movers(commodities: list[dict], early: bool, pct_key: str,
+                   cur_key: str, ly_key: str) -> list[dict]:
+    """Commodities eligible to be named, sorted ascending by the comparison
+    behind the wording: absolute KMT shift (cur - ly) early in the crop year,
+    YoY % from week EARLY_SEASON_MAX_WEEK + 1 onward."""
+    if early:
+        rows = [m for m in commodities
+                if m.get(cur_key) is not None and m.get(ly_key) is not None
+                and max(m[cur_key], m[ly_key]) >= SUMMARY_MIN_BASE_KT]
+        return sorted(rows, key=lambda m: m[cur_key] - m[ly_key])
+    rows = [m for m in commodities
+            if m.get(pct_key) is not None
+            and min(m.get(cur_key) or 0.0, m.get(ly_key) or 0.0) >= SUMMARY_MIN_BASE_KT]
+    return sorted(rows, key=lambda m: m[pct_key])
 
 
 class CommentaryWriter:
     def __init__(self, use_llm: bool = USE_LLM_DEFAULT, api_key: str = ANTHROPIC_API_KEY):
         self.use_llm = use_llm and bool(api_key)
         self.api_key = api_key
+        self.skill = load_language_skill()
 
     def write(self, payload: dict) -> dict:
-        """Returns {"key_watch_west": str, "key_watch_east": Optional[str],
-        "signal_highlights": [str, ...]}"""
-        if self.use_llm:
+        """Returns {"summary": [str, str, str]} -- 'Headline: narrative' bullets."""
+        if self.use_llm and self.skill:
             try:
                 return self._write_llm(payload)
             except Exception as exc:
                 log.warning(f"LLM commentary failed ({exc}); falling back to rule-based text.")
         return self._write_rule_based(payload)
 
-    # -- rule-based fallback (deterministic, no external calls) ----------
+    # -- rule-based (deterministic, no external calls) -------------------
+    # Mirrors the skill's 3-bullet framework and word bank. Bullet 1 uses
+    # system-wide delivery totals only, so the Corn/Soybeans
+    # no-delivery-commentary rule holds.
     def _write_rule_based(self, payload: dict) -> dict:
-        commodities = payload["commodities"]
+        macro, commodities = payload["macro"], payload["commodities"]
+        week = macro.get("week_number")
+        early = week is not None and week <= EARLY_SEASON_MAX_WEEK
+        bullets = [
+            self._deliveries_bullet(macro),
+            self._exports_bullet(commodities, early),
+            self._logistics_bullet(macro, commodities, early),
+        ]
+        return {"summary": _check_bullets(bullets)}
 
-        def importance_score(m):
-            """Base score is the largest absolute % swing across the three
-            signal dimensions (i.e. how extreme the underlying flag-triggering
-            move was), plus a fixed boost for PRIORITY_CROPS so a major
-            market mover like Canola or Wheat isn't crowded out of the top
-            highlights by a thinner-volume commodity whose percentage swing
-            only looks larger because its base tonnage is small. Deliveries
-            still contribute to ranking for Corn/Soybeans even though the
-            delivery TEXT itself is suppressed in the final phrase -- only
-            the commentary wording is restricted, not the underlying ranking
-            math, per 'preserve all existing metric calculations'."""
-            vals = [abs(m.get(k) or 0) for k in (
-                "exports_yoy_pct", "deliveries_wow_pct", "stocks_yoy_pct")]
-            score = max(vals) if vals else 0.0
-            if m.get("display_name") in PRIORITY_CROPS:
-                score += PRIORITY_CROP_SCORE_BOOST
-            return score
+    @staticmethod
+    def _deliveries_bullet(macro: dict) -> str:
+        wow = macro.get("deliveries_wow_pct")
+        if wow is not None and wow >= DELIVERY_WOW_BAND_PCT:
+            head, intake = "Farm Deliveries Accelerating", "Elevator intake surged this week, signalling robust producer selling"
+        elif wow is not None and wow <= -DELIVERY_WOW_BAND_PCT:
+            head, intake = "Farm Deliveries Slowing", "Elevator intake cooled off this week, pointing to a producer selling pause"
+        else:
+            head, intake = "Farm Deliveries Steady", "Elevator intake held a steady pace this week"
 
-        ranked = sorted(
-            [m for m in commodities if m.get("flags")],
-            key=importance_score, reverse=True,
-        )
+        vs5 = macro.get("deliveries_vs_5yr_pct")
+        if vs5 is None:
+            return f"{head}: {intake}."
+        if vs5 >= PACE_WELL_BAND_PCT:
+            pace = "running well ahead of"
+        elif vs5 >= 0:
+            pace = "running slightly ahead of"
+        elif vs5 > -PACE_WELL_BAND_PCT:
+            pace = "tracking slightly behind"
+        else:
+            pace = "lagging well behind"
+        return f"{head}: {intake}, while cumulative crop-year pace is {pace} the 5-year average."
 
-        bullets = [f"{m['display_name']} — {natural_language_summary(m)}." for m in ranked[:5]]
-        if not bullets:
-            bullets = ["No commodity crossed a signal threshold this week; flows are tracking within normal ranges."]
+    @staticmethod
+    def _exports_bullet(commodities: list[dict], early: bool) -> str:
+        movers = [m for m in commodities if m.get("weekly_exports_kt")]
+        if not movers:
+            return "Export Flow Quiet: Terminal export activity was minimal this week, with no single commodity driving outbound volume."
+        driver = max(movers, key=lambda m: m["weekly_exports_kt"])
+        d_head, d_prose = _names(driver)
 
-        # Key Watch: top-ranked flagged commodity from each region group.
-        # No literal "West:"/"East:" label in the output text -- just
-        # "[Commodity] — [Narrative]." per bullet; the template supplies the
-        # bullet character. The West/East SELECTION logic is unchanged.
-        west_top = next((m for m in ranked if m["display_name"] in WESTERN_COMMODITIES), None)
-        east_top = next((m for m in ranked if m["display_name"] in EASTERN_COMMODITIES), None)
+        cur = sum(m.get("ytd_exports_kt") or 0.0 for m in commodities)
+        ly = sum(m.get("ly_ytd_exports_kt") or 0.0 for m in commodities)
+        change = (cur - ly) / ly * 100.0 if ly else 0.0
+        tone = ("remains strong" if change >= EXPORT_PACE_BAND_PCT
+                else "is soft" if change <= -EXPORT_PACE_BAND_PCT else "is steady")
 
-        key_watch_west = (
-            f"{west_top['display_name']} — {natural_language_summary(west_top)}."
-            if west_top else "Western crop flows are broadly in line with seasonal norms this week."
-        )
-        key_watch_east = (
-            f"{east_top['display_name']} — {natural_language_summary(east_top)}."
-            if east_top else None
-        )
+        ranked = _ranked_movers(commodities, early, "exports_yoy_pct", "ytd_exports_kt", "ly_ytd_exports_kt")
+        ahead = [m for m in ranked if m["ytd_exports_kt"] > m["ly_ytd_exports_kt"]]
+        behind = [m for m in ranked if m["ytd_exports_kt"] < m["ly_ytd_exports_kt"]]
+        lead = ahead[-1] if ahead else None
+        lag = behind[0] if behind else None
 
-        return {"key_watch_west": key_watch_west, "key_watch_east": key_watch_east, "signal_highlights": bullets}
+        driver_clause = f", led by {d_prose} movement"
+        if lead is driver:
+            driver_clause += " running well ahead of last year"
+        lead_clause = (f"; {_names(lead)[1]} {_verb(lead, 'shows', 'show')} leading export momentum"
+                       if lead is not None and lead is not driver else "")
+        lag_clause = (f", while {_names(lag)[1]} {_verb(lag, 'continues', 'continue')} to lag behind"
+                      if lag is not None and lag is not driver else "")
+        return _fit(f"{d_head} Driving Outbound Flow: Terminal export activity {tone}",
+                    driver_clause, lead_clause, lag_clause) + "."
+
+    @staticmethod
+    def _logistics_bullet(macro: dict, commodities: list[dict], early: bool) -> str:
+        west, east = macro.get("west_coast_util_pct"), macro.get("east_interior_util_pct")
+        if west is None or east is None:
+            return "Pipeline Visibility Limited: Terminal capacity data is unavailable this week, so corridor fluidity cannot be assessed."
+
+        if west >= RULE_THRESHOLDS["high_utilization_pct"]:
+            head, state = "West Coast Congestion Risk", "West Coast terminal space is close to capacity, raising congestion risk"
+        elif west >= TIGHTENING_UTIL_PCT:
+            head, state = "West Coast Space Tightening", "Storage capacity is tightening at West Coast terminals"
+        else:
+            head, state = "Pipeline Fluid", "West Coast terminals retain ample storage space"
+
+        gap = west - east
+        if gap >= CORRIDOR_IMBALANCE_PTS:
+            corridor = ", maintaining a clear space imbalance over eastern corridors"
+        elif gap <= -CORRIDOR_IMBALANCE_PTS:
+            corridor = ", while eastern corridors carry the tighter space position"
+        else:
+            corridor = ", with space broadly balanced across corridors"
+
+        stock_clause = ""
+        ranked = _ranked_movers(commodities, early, "stocks_yoy_pct", "stocks_kt", "stocks_ly_kt")
+        if ranked:
+            key = ((lambda m: abs(m["stocks_kt"] - m["stocks_ly_kt"])) if early
+                   else (lambda m: abs(m["stocks_yoy_pct"])))
+            mover = max(ranked, key=key)
+            building = mover["stocks_kt"] > mover["stocks_ly_kt"] if early else mover["stocks_yoy_pct"] > 0
+            stock_clause = (f"; {_attributive(mover)} stocks are "
+                            f"{'building above' if building else 'drawing below'} last year")
+        return _fit(f"{head}: {state}", corridor, stock_clause) + "."
 
     # -- optional LLM path (Anthropic Messages API) -----------------------
     def _write_llm(self, payload: dict) -> dict:
         import requests
+        week = payload["macro"].get("week_number")
         prompt = (
-            "You are a grain markets analyst. Given this objective JSON payload of "
-            "calculated metrics and rule-based status flags for Canadian grain commodities, "
-            "write:\n"
-            "1. `key_watch_west`: one sentence, format '[Commodity] — [Narrative].' (no literal "
-            "'West:' label), on the top Western commodity story (Western commodities: everything "
-            "except Corn and Soybeans).\n"
-            "2. `key_watch_east`: same format, on the top Eastern commodity story (Eastern "
-            "commodities: Corn and Soybeans only), or null if neither shows a notable signal.\n"
-            "3. `signal_highlights`: up to 5 concise bullet strings, format '[Commodity] — "
-            "[Narrative].', written the way a market analyst would talk -- not a mechanical list of "
-            "flag labels and percentages. Prefer phrasing like 'surging weekly deliveries (+184.3% "
-            "WoW), strong early export pull (+179.7% YTD across both coasts), stocks elevated vs "
-            "last year (+54.8%)' over 'SURGING_DELIVERIES, STRONG_EXPORT_PACE, BUILDING_STOCKS'.\n"
-            "CRITICAL: For Corn and Soybeans specifically, CGC's licensed primary-elevator delivery "
-            "data isn't comprehensively tracked in Eastern Canada -- NEVER mention deliveries, "
-            "surging/slowing deliveries, or delivery WoW/YoY % for these two, in either key_watch_east "
-            "or signal_highlights. Their commentary must focus only on export pacing, export corridor "
-            "(West Coast vs. East/Interior, using each commodity's west_export_ytd_kt/"
-            "east_export_ytd_kt fields), and commercial stocks -- e.g. 'strong early export demand "
-            "(+410.3% YTD via Eastern terminals), commercial stocks elevated vs last year (+44.3%)'.\n"
-            "Corridor framing (from west_export_ytd_kt/east_export_ytd_kt, YTD not single-week): "
-            "east_share >= 0.85 -> 'via Eastern corridors'; west_share >= 0.85 -> 'via Western "
-            "corridors'; otherwise -> 'across both coasts'; if combined YTD volume is under 5 kt -> "
-            "'light export activity'.\n"
-            "Only use the numbers given — do not invent figures. "
-            "Respond ONLY with JSON: {\"key_watch_west\": str, \"key_watch_east\": str|null, "
-            "\"signal_highlights\": [str, ...]}\n\n"
+            "Write the SUMMARY section of this week's Canadian Grain Handling Weekly, "
+            "following the language skill exactly.\n"
+            f"Hard constraints: exactly {SUMMARY_BULLET_COUNT} bullets in the framework order "
+            "(Farm Deliveries & Pace; Export Demand & Commodity Drivers; Logistics & Pipeline "
+            "Health). Each bullet is 'Short Headline: narrative sentence', at most "
+            f"{SUMMARY_MAX_WORDS} words in total. Use NO numbers at all -- no tonnages, "
+            "percentages or counts -- because the tables below already show them; '5-year "
+            "average' is the only allowed figure.\n"
+            "Corn and Soybeans: CGC primary-elevator delivery data isn't comprehensive in Eastern "
+            "Canada, so never characterize their deliveries; talk only about their exports and "
+            "stocks.\n"
+            f"Crop-year week {week}: in weeks 1-{EARLY_SEASON_MAX_WEEK} judge commodity "
+            "outperformers/laggards by absolute volume change vs last year, not % change. Never "
+            f"name a commodity as a mover when either year's volume is under {SUMMARY_MIN_BASE_KT:.0f} KMT.\n"
+            "Base every judgement on the payload; do not invent facts.\n"
+            "Respond ONLY with JSON: {\"summary\": [str, str, str]}\n\n"
             f"PAYLOAD:\n{json.dumps(payload, default=str)}"
         )
         resp = requests.post(
@@ -894,6 +902,7 @@ class CommentaryWriter:
             json={
                 "model": ANTHROPIC_MODEL,
                 "max_tokens": 500,
+                "system": self.skill,
                 "messages": [{"role": "user", "content": prompt}],
             },
             timeout=30,
@@ -904,7 +913,7 @@ class CommentaryWriter:
             if block.get("type") == "text"
         )
         text = text.strip().strip("`").removeprefix("json").strip()
-        return json.loads(text)
+        return {"summary": _check_bullets(json.loads(text).get("summary"))}
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -938,7 +947,91 @@ def fmt_mmt(v: Optional[float]) -> str:
     return f"{v:,.2f}"
 
 
-def render_report_html(payload: dict, chart_url: str, week_label: str, crop_year_label: str) -> str:
+# Full-document wrapper for the local HTML file only. Ghost gets the bare
+# fragment (render_report_html): it drops <style> blocks in newsletters, and
+# the page needs its own scroll behaviour. The height/overflow clamp is
+# print-only, so previews scroll; print/PDF is a strict 1-page A4 portrait.
+DOCUMENT_SHELL = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title}</title>
+<style>
+/* Base web view: scrollable (no height/overflow clamp outside print) */
+html, body {{
+  height: auto;
+  overflow: visible;
+  font-size: 9.5pt;
+  line-height: 1.25;
+}}
+
+body {{
+  margin: 0;
+  padding: 8px;
+  background: #FFFFFF;
+}}
+
+/* Tight whitespace & spacing controls */
+section, .report-section {{
+  margin-bottom: 10px;
+}}
+
+h2, h3, .section-title {{
+  margin-top: 0;
+  margin-bottom: 4px;
+}}
+
+table {{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9pt;
+}}
+
+td, th {{
+  padding: 4px 6px;
+}}
+
+/* Strict single-page print boundary */
+@media print {{
+  @page {{
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }}
+  html, body {{
+    max-height: 100vh;
+    overflow: hidden;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }}
+  body {{
+    padding: 0;
+  }}
+  .no-break {{
+    page-break-inside: avoid;
+  }}
+}}
+</style>
+</head>
+<body>
+{body}
+</body>
+</html>
+"""
+
+
+def render_document_html(fragment: str, title: str) -> str:
+    from html import escape
+    return DOCUMENT_SHELL.format(title=escape(title), body=fragment)
+
+
+def fmt_util(v: Optional[float]) -> str:
+    if v is None or (isinstance(v, float) and np.isnan(v)):
+        return "N/A"
+    return f"{v:.0f}%"
+
+
+def render_report_html(payload: dict, week_label: str, crop_year_label: str) -> str:
     from jinja2 import Environment, FileSystemLoader
 
     env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)))
@@ -946,6 +1039,7 @@ def render_report_html(payload: dict, chart_url: str, week_label: str, crop_year
     env.filters["pctnum"] = fmt_pct_number
     env.filters["kt"] = fmt_kt
     env.filters["mmt"] = fmt_mmt
+    env.filters["util"] = fmt_util
     template = env.get_template(TEMPLATE_NAME)
 
     week_number = payload["macro"].get("week_number")
@@ -954,13 +1048,10 @@ def render_report_html(payload: dict, chart_url: str, week_label: str, crop_year
     return template.render(
         macro=payload["macro"],
         commodities=payload["commodities"],
-        signal_highlights=payload["signal_highlights"],
-        key_watch_west=payload["key_watch_west"],
-        key_watch_east=payload.get("key_watch_east"),
+        summary=payload["summary"],
         is_early_season=is_early_season,
         week_label=week_label,
         crop_year_label=crop_year_label,
-        chart_url=chart_url,
         footer_url=FOOTER_URL,
         publication_title=PUBLICATION_TITLE,
         generated_at=payload["macro"].get("generated_at", ""),
@@ -1020,11 +1111,8 @@ class GhostPublisher:
                 "GHOST_API_URL / GHOST_ADMIN_API_KEY not configured. "
                 "Set them as environment variables to enable publishing."
             )
-        # The chart is already embedded inline in `html` as a base64 data URI
-        # (see build_chart_data_uri) so the post displays correctly with no
-        # further substitution needed here. We still upload the same PNG to
-        # Ghost separately so it can be set as the post's feature_image,
-        # which Ghost expects as a real hosted URL rather than a data URI.
+        # The chart is not part of the report body; it is uploaded only so it
+        # can be set as the post's feature_image (a hosted URL).
         log.info("Uploading chart image to Ghost (for feature_image) ...")
         image_url = self.upload_image(chart_path)
         log.info("Creating draft post in Ghost ...")
@@ -1039,14 +1127,13 @@ class GhostPublisher:
 # ══════════════════════════════════════════════════════════════════════════
 
 def build_analytics(force_refresh: bool = False) -> CGCAnalytics:
-    """Same construction/refresh pattern as run_report.py: self-locating
-    paths, CGCAnalytics as the single entry point for all data."""
+    """Self-locating paths, CGCAnalytics as the single entry point for all data."""
     log.info(f"Looking for capacity workbook at: {CAPACITY_PATH}")
     if not CAPACITY_PATH.exists():
         raise SystemExit(
             f"CGC_Capacity workbook was not found at {CAPACITY_PATH}. "
-            f"Copy/move your CGC_Capacity.xlsb, .xlsx, or .xls file next to "
-            f"generate_weekly_pulse.py (or set CGC_CAPACITY_FILE)."
+            f"Copy/move your CGC_Capacity.xlsb, .xlsx, or .xls file into "
+            f"{DATA_DIR} (or set CGC_CAPACITY_FILE)."
         )
     analytics = CGCAnalytics(
         gsw_data_dir=str(GSW_DATA_DIR),
@@ -1060,8 +1147,12 @@ def build_analytics(force_refresh: bool = False) -> CGCAnalytics:
 
 
 def run(week: Optional[int] = None, use_llm: bool = USE_LLM_DEFAULT,
-        publish: bool = True, force_refresh: bool = False) -> None:
-    analytics = build_analytics(force_refresh=force_refresh)
+        publish: bool = True, force_refresh: bool = False,
+        analytics: Optional[CGCAnalytics] = None) -> Path:
+    """Build the report. Pass an already-refreshed `analytics` (as
+    run_report.py does) to skip a second GSW download."""
+    if analytics is None:
+        analytics = build_analytics(force_refresh=force_refresh)
     engine = WeeklyPulseEngine(analytics)
 
     macro = engine.macro_snapshot(week=week)
@@ -1073,22 +1164,21 @@ def run(week: Optional[int] = None, use_llm: bool = USE_LLM_DEFAULT,
     commentary = CommentaryWriter(use_llm=use_llm).write(payload)
     payload.update(commentary)
 
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     JSON_PAYLOAD_PATH.write_text(json.dumps(payload, indent=2, default=str))
     log.info(f"Objective payload written -> {JSON_PAYLOAD_PATH}")
 
     series_df = engine.five_year_export_series(week=macro["week_number"])
-    chart_path = build_export_pacing_chart(series_df)
-    chart_url = build_chart_data_uri(chart_path)
+    chart_path = build_export_pacing_chart(series_df)  # Ghost feature_image only; not in the report body
 
     week_num = macro["week_number"]
     crop_year_label = macro["crop_year"].replace("20", "") if macro["crop_year"] else ""
     week_label = f"Week {week_num:02d}" if week_num else "Week —"
 
-    html = render_report_html(payload, chart_url, week_label, crop_year_label)
-    HTML_OUTPUT_PATH.write_text(html, encoding="utf-8")
-    log.info(f"HTML report written -> {HTML_OUTPUT_PATH}")
-
+    html = render_report_html(payload, week_label, crop_year_label)
     title = f"{PUBLICATION_TITLE} - Week {week_num:02d}" if week_num else PUBLICATION_TITLE
+    HTML_OUTPUT_PATH.write_text(render_document_html(html, title), encoding="utf-8")
+    log.info(f"HTML report written -> {HTML_OUTPUT_PATH}")
 
     if publish:
         try:
@@ -1100,6 +1190,7 @@ def run(week: Optional[int] = None, use_llm: bool = USE_LLM_DEFAULT,
             log.error(f"Ghost publish skipped/failed: {exc}")
     else:
         log.info("--no-publish set: skipping Ghost draft creation.")
+    return HTML_OUTPUT_PATH
 
 
 def main():

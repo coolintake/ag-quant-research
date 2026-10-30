@@ -1,0 +1,58 @@
+USER GUIDE - CGC_ANALYZER
+Written in ASD-STE100 Simplified Technical English.
+==========================================================================
+
+1. PURPOSE
+--------------------------------------------------------------------------
+This project analyzes the Canadian Grain Commission (CGC) Grain Statistics
+Weekly (GSW) data. It shows grain stocks, exports, deliveries and elevator
+capacity use. It makes four outputs:
+  - CanGrainStats: an interactive dashboard with five tabs.
+  - Canadian Grain Handling Weekly: a one-page weekly report.
+  - CGC_MonthlyEx: a monthly export S&D workbook.
+  - An executive text report in the terminal.
+
+2. HOW TO RUN / REFRESH
+--------------------------------------------------------------------------
+Open a terminal in this folder. Do these steps:
+  1. Install the packages (one time only):
+       pip install -r requirements.txt
+  2. Make sure that data/CGC_Capacity.xlsb is present.
+  3. Get the newest data from GitHub:
+       git pull
+     A GitHub workflow refreshes the GSW data on Wed, Thu and Fri.
+  4. Run the full pipeline (new data, monthly workbook, weekly report):
+       python run_report.py
+     Or run one output on its own:
+       python generate_weekly_pulse.py       (weekly report)
+       python CGC_MonthlyEx.py               (monthly workbook)
+     The dashboard is in the dashboard folder. Start it from the repo root:
+       streamlit run CGC_Analyzer/dashboard/app.py
+Do not use "python app.py". Use "streamlit run".
+Useful options:
+  - Pipeline: also post the report to Ghost as a draft: --publish
+  - Pipeline: get new data only: --ingest-only
+  - Weekly report without a Ghost post: --no-publish
+  - Weekly report without the LLM text: --no-llm
+  - Monthly workbook without a download: --no-refresh
+  - Download all crop years again: --force-refresh
+To publish to Ghost, put GHOST_API_URL and GHOST_ADMIN_API_KEY in .env.
+
+3. HOW TO VIEW OUTPUTS
+--------------------------------------------------------------------------
+  - Dashboard: the browser opens at http://localhost:8501.
+  - Weekly report: Outputs/weekly_pulse/weekly_pulse_report.html.
+    The report also goes to Ghost as a draft post. Review it, then publish.
+  - Monthly workbook: Outputs/CGC_MonthlyEx_<date>.xlsx (units: kt).
+    The yellow column is the month in progress.
+  - Data check (run_report.py): the terminal shows it.
+
+4. HOW TO ARCHIVE / MAINTENANCE
+--------------------------------------------------------------------------
+  - Close the monthly workbook in Excel before you run it again.
+  - Move old CGC_MonthlyEx_<date>.xlsx files to a dated archive folder.
+  - Do not edit data/gsw_data/ by hand. The workflow writes it.
+  - Do not put .env or Outputs/ in Git.
+  - Change generate_weekly_pulse.py and its HTML template together.
+  - Replace data/CGC_Capacity.xlsb when the CGC issues a new capacity list.
+  - Read README.md for the full method.

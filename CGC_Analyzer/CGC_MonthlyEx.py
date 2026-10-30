@@ -5,7 +5,7 @@ Monthly export S&D matrix: CGC Grain Statistics Weekly (GSW) weekly exports
 pro-rated onto calendar months and laid out by marketing year.
 
     python CGC_MonthlyEx.py                 # refresh GSW cache, write workbook
-    python CGC_MonthlyEx.py --no-refresh    # use gsw_data/_cache as-is
+    python CGC_MonthlyEx.py --no-refresh    # use data/gsw_data/_cache as-is
 
 Output: Outputs/CGC_MonthlyEx_<latest week-ending date>.xlsx (next to this file).
 
@@ -44,7 +44,7 @@ from typing import Dict, List, Optional, Union
 import numpy as np
 import pandas as pd
 
-from cgc_engine import (
+from core.cgc_engine import (
     CROP_YEAR_SEASON_START_MONTH,
     DEFAULT_CROP_YEARS,
     DEFAULT_CURRENT_YEAR,
@@ -57,7 +57,7 @@ logger = logging.getLogger("CGC_MonthlyEx")
 PathLike = Union[str, Path]
 
 HERE = Path(__file__).resolve().parent
-GSW_DATA_DIR = HERE / "gsw_data"
+GSW_DATA_DIR = HERE / "data" / "gsw_data"
 OUTPUT_DIR = HERE / "Outputs"
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -415,7 +415,7 @@ def run(gsw_data_dir: PathLike = GSW_DATA_DIR, output_dir: PathLike = OUTPUT_DIR
         keep_truncated: bool = False) -> Path:
     t0 = time.perf_counter()
     if refresh:
-        from ingestion import CGCDownloader
+        from core.ingestion import CGCDownloader
         gsw = CGCDownloader(gsw_data_dir, years=DEFAULT_CROP_YEARS,
                             current_year=DEFAULT_CURRENT_YEAR).load_all(force_refresh=force_refresh)
     else:
