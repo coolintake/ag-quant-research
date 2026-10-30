@@ -16,7 +16,6 @@ from typing import Any
 
 import pandas as pd
 import pytest
-import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -24,9 +23,8 @@ import config  # noqa: E402
 from database import PriceDatabase  # noqa: E402
 from ingest import save_raw_snapshot  # noqa: E402
 from manual_override import ManualOverrideError, import_csv, validate_frame  # noqa: E402
-from pdq_client import (  # noqa: E402
-    PDQAPIError,
-    PDQClient,
+from pdq_parsing import (  # noqa: E402
+    PDQParseError,
     parse_payload,
     resolve_delivery_year,
 )
@@ -150,52 +148,10 @@ class TestParsing:
          [1, 2, 3]],
     )
     def test_bad_payload_raises(self, bad):
-        with pytest.raises(PDQAPIError):
+        with pytest.raises(PDQParseError):
             parse_payload(bad)
 
 
-class _FakeResponse:
-    def __init__(self, status: int, body: Any = None, text: str = "") -> None:
-        self.status_code, self._body, self.text = status, body, text
-        self.ok = 200 <= status < 300
-
-    def json(self) -> Any:
-        if self._body is None:
-            raise ValueError("no json")
-        return self._body
-
-
-class _FakeSession:
-    def __init__(self, response: _FakeResponse | Exception) -> None:
-        self.response = response
-
-    def get(self, url: str, timeout: float) -> _FakeResponse:
-        if isinstance(self.response, Exception):
-            raise self.response
-        return self.response
-
-    def close(self) -> None:
-        pass
-
-
-class TestClient:
-    def test_fetch_ok(self, payload):
-        client = PDQClient(session=_FakeSession(_FakeResponse(200, payload)))
-        assert len(client.fetch().records) == 6
-
-    @pytest.mark.parametrize(
-        "response",
-        [_FakeResponse(503, text="down"), _FakeResponse(200, None, "<html>"),
-         requests.ConnectionError("no route")],
-    )
-    def test_fetch_errors(self, response):
-        with pytest.raises(PDQAPIError):
-            PDQClient(session=_FakeSession(response)).fetch_json()
-
-
-# --------------------------------------------------------------------------- #
-# Database
-# --------------------------------------------------------------------------- #
 class TestDatabase:
     def test_upsert_is_idempotent(self, db, payload):
         snap = parse_payload(payload)

@@ -1,0 +1,54 @@
+USER GUIDE - CANADA_CROP_PRICES
+Written in ASD-STE100 Simplified Technical English.
+==========================================================================
+
+1. PURPOSE
+--------------------------------------------------------------------------
+This project keeps Western Canadian cash grain prices in a local database.
+It reads PDQ price files and manual CSV files.
+It calculates provincial price averages for the RPA pricing windows:
+  - Run 1: Dec 15 to Jan 15
+  - Run 2: Jan 15 to Feb 15
+  - Run 3: Feb 15 to Mar 15
+The PDQ subscription stopped in October 2026. The project does not use
+the internet. All prices come from local files.
+
+2. HOW TO RUN / REFRESH
+--------------------------------------------------------------------------
+Open a terminal in this folder. Do these steps in sequence:
+  1. Install the packages (one time only):
+       pip install -r requirements.txt
+  2. Put new PDQ website exports (pdq-export-*.csv) in the "input" folder.
+  3. Load the PDQ exports into the database:
+       python backfill_pdq.py
+  4. To load a manual price file, use this command:
+       python ingest.py --import-csv FILE.csv
+  5. Calculate the window averages for a planting year:
+       python price_aggregator.py --crop-year 2027
+  6. To keep the averages in a file, add this option:
+       --csv output/averages_2027.csv
+  7. Export the database to Parquet files:
+       python ingest.py --export-parquet
+If the database is damaged, rebuild it from the raw JSON files:
+       python ingest.py --reload-raw
+To test the code, use this command:
+       pytest tests/
+
+3. HOW TO VIEW OUTPUTS
+--------------------------------------------------------------------------
+  - Database: data/crop_prices.duckdb (open it with DuckDB).
+  - Parquet files: data/parquet/ (read them with pandas or DuckDB).
+  - Window averages: the terminal shows them. The --csv file keeps them.
+  - Charts: the "output" folder (PNG files).
+Zero or empty prices are kept as NULL. Do not change them to 0.
+
+4. HOW TO ARCHIVE / MAINTENANCE
+--------------------------------------------------------------------------
+  - Keep the raw JSON files in data/raw/. They are the master record.
+  - Do not delete PDQ exports in "input" until the load is complete.
+  - After a load, you can move old exports to a dated sub-folder.
+  - Make a copy of data/crop_prices.duckdb before a large reload.
+  - Do not add PDQ internet calls. Do not add acreage models here.
+    Acreage models are in Canada_Planting_Model.
+  - Read CLAUDE.md before you change config.py, database.py,
+    pdq_parsing.py, ingest.py or price_aggregator.py.

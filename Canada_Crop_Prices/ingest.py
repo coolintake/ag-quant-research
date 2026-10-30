@@ -1,13 +1,13 @@
-"""Command-line entry point: fetch -> clean -> load prices into DuckDB / Parquet.
+"""Command-line entry point: load locally stored prices into DuckDB / Parquet.
 
-Examples::
+All inputs are local files (the PDQ API subscription has ended):
 
-    python ingest.py --fetch-pdq                    # daily PDQ pull
     python ingest.py --import-csv lentils.csv       # manual / non-PDQ prices
     python ingest.py --export-parquet               # full Parquet rebuild
     python ingest.py --reload-raw                   # replay data/raw/*.json into DuckDB
 
-Flags can be combined; they run in the order fetch, reload, import, export.
+Historical PDQ website exports are loaded with ``python backfill_pdq.py``.
+Flags can be combined; they run in the order reload, import, export.
 Exit code is 0 on success and 1 if any step failed.
 """
 
@@ -25,7 +25,7 @@ from typing import Any
 import config
 from database import PriceDatabase
 from manual_override import ManualOverrideError, import_csv
-from pdq_client import PDQAPIError, PDQClient, PDQSnapshot, parse_payload
+from pdq_parsing import PDQParseError, PDQSnapshot, parse_payload
 
 log = logging.getLogger("ingest")
 
@@ -79,19 +79,6 @@ def _load_snapshot(db: PriceDatabase, snapshot: PDQSnapshot) -> None:
     )
 
 
-def fetch_pdq(db: PriceDatabase) -> set[tuple[int, int]]:
-    """Fetch PDQ, save the raw snapshot, and upsert. Returns touched (year, month)s."""
-    with PDQClient() as client:
-        payload = client.fetch_json()
-    snapshot = parse_payload(payload)
-    path = save_raw_snapshot(payload, snapshot.imported_at)
-    log.info("Raw snapshot: %s", path or "unchanged (already saved)")
-    if db.has_import(snapshot.imported_at):
-        log.info("PDQ import %s already loaded; refreshing it", snapshot.imported_at)
-    _load_snapshot(db, snapshot)
-    return {(snapshot.imported_at.year, snapshot.imported_at.month)}
-
-
 def reload_raw(db: PriceDatabase) -> set[tuple[int, int]]:
     """Replay every saved raw snapshot into DuckDB."""
     months: set[tuple[int, int]] = set()
@@ -101,7 +88,7 @@ def reload_raw(db: PriceDatabase) -> set[tuple[int, int]]:
     for path in files:
         try:
             snapshot = parse_payload(json.loads(path.read_text(encoding="utf-8")))
-        except (OSError, json.JSONDecodeError, PDQAPIError) as exc:
+        except (OSError, json.JSONDecodeError, PDQParseError) as exc:
             log.error("Skipping %s: %s", path.name, exc)
             continue
         _load_snapshot(db, snapshot)
@@ -123,9 +110,7 @@ def import_manual(db: PriceDatabase, paths: Sequence[Path]) -> set[tuple[int, in
 # CLI
 # --------------------------------------------------------------------------- #
 def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Canada crop price ingestion (PDQ + manual).")
-    parser.add_argument("--fetch-pdq", action="store_true",
-                        help="Pull PDQ prices, save the JSON snapshot, upsert into DuckDB/Parquet")
+    parser = argparse.ArgumentParser(description="Canada crop price ingestion from local files (PDQ snapshots + manual CSVs).")
     parser.add_argument("--import-csv", type=Path, nargs="+", metavar="PATH",
                         help="Ingest manual non-PDQ price CSV file(s)")
     parser.add_argument("--export-parquet", action="store_true",
@@ -134,8 +119,8 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
                         help="Rebuild DuckDB from every saved raw JSON snapshot")
     parser.add_argument("-v", "--verbose", action="store_true", help="Debug logging")
     args = parser.parse_args(argv)
-    if not (args.fetch_pdq or args.import_csv or args.export_parquet or args.reload_raw):
-        parser.error("choose at least one of --fetch-pdq, --import-csv, --export-parquet, --reload-raw")
+    if not (args.import_csv or args.export_parquet or args.reload_raw):
+        parser.error("choose at least one of --import-csv, --export-parquet, --reload-raw")
     return args
 
 
@@ -150,12 +135,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     touched: set[tuple[int, int]] = set()
     try:
         with PriceDatabase() as db:
-            if args.fetch_pdq:
-                try:
-                    touched |= fetch_pdq(db)
-                except PDQAPIError as exc:
-                    log.error("PDQ fetch failed: %s", exc)
-                    ok = False
             if args.reload_raw:
                 touched |= reload_raw(db)
             if args.import_csv:

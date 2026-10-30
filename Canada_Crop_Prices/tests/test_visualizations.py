@@ -242,7 +242,7 @@ def main() -> int:
 # Pytest checks (synthetic database; never touches the real one)
 # --------------------------------------------------------------------------- #
 def _synthetic_db(tmp_path: Path) -> PriceDatabase:
-    from pdq_client import parse_payload
+    from pdq_parsing import parse_payload
 
     def row(zone: str, month: str, commodity: str, ton: float, basis: float) -> dict:
         return {"zone": zone, "zone_id": config.PDQ_ZONE_IDS[zone], "month": month,

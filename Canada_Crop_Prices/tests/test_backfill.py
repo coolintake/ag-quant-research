@@ -1,4 +1,4 @@
-"""Tests for backfill_pdq.py and the CSV-export parsing helpers in pdq_client.py."""
+"""Tests for backfill_pdq.py and the CSV-export parsing helpers in pdq_parsing.py."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import config  # noqa: E402
 from backfill_pdq import BackfillError, load_exports, parse_export  # noqa: E402
 from database import PriceDatabase  # noqa: E402
-from pdq_client import (  # noqa: E402
+from pdq_parsing import (  # noqa: E402
     clean_basis,
     clean_price,
     parse_export_month,

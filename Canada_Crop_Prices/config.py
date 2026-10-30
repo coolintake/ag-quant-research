@@ -28,19 +28,8 @@ INPUT_DIR: Final[Path] = PROJECT_ROOT / "input"
 RAW_SNAPSHOT_SUFFIX: Final[str] = "_pdq.json"
 
 # --------------------------------------------------------------------------- #
-# PDQ API
+# PDQ snapshot format (local files only; the PDQ API subscription has ended)
 # --------------------------------------------------------------------------- #
-PDQ_BASE_URL: Final[str] = "https://www.pdqinfo.ca/api/v2"
-# The key is part of the URL path. Override with the PDQ_API_KEY env var.
-PDQ_API_KEY: Final[str] = os.environ.get("PDQ_API_KEY", "0a67610a92b26118b52a187228afb767")
-PDQ_URL: Final[str] = f"{PDQ_BASE_URL}/{PDQ_API_KEY}"
-
-HTTP_TIMEOUT_SECONDS: Final[float] = 30.0
-HTTP_MAX_RETRIES: Final[int] = 4
-HTTP_BACKOFF_FACTOR: Final[float] = 1.5          # sleeps 0, 1.5, 3, 6 ... seconds
-HTTP_RETRY_STATUSES: Final[tuple[int, ...]] = (429, 500, 502, 503, 504)
-HTTP_USER_AGENT: Final[str] = "Canada_Crop_Prices/1.0 (+price ingestion)"
-
 # Format of PDQ's top-level "prices_imported_at" field.
 PDQ_IMPORTED_AT_FORMAT: Final[str] = "%Y-%m-%d %H:%M"
 

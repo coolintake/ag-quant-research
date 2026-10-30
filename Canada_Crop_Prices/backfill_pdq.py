@@ -19,7 +19,7 @@ Mapping into ``pdq_raw_prices``
 - ``BASIS`` ($/bu) -> ``basis_bu``; ``basis_mt`` converted the same way.
 - ``CASH - CASH CHANGE`` -> ``bus_price_prev`` / ``ton_price_prev``.
 
-Cleaning uses the ``pdq_client`` rules: ``-``, blanks and zero prices -> NULL;
+Cleaning uses the ``pdq_parsing`` rules: ``-``, blanks and zero prices -> NULL;
 zero basis -> NULL for flat-price commodities (durum, yellow peas); basis is
 NULL whenever the cash price is.
 
@@ -47,7 +47,7 @@ import pandas as pd
 
 import config
 from database import PriceDatabase
-from pdq_client import clean_basis, clean_price, parse_export_month, parse_futures_code
+from pdq_parsing import clean_basis, clean_price, parse_export_month, parse_futures_code
 
 log = logging.getLogger("backfill_pdq")
 

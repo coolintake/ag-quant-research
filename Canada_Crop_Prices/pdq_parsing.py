@@ -1,6 +1,7 @@
-"""HTTP client and response parser for the PDQinfo price API.
+"""Parsers for locally stored PDQ price data (raw JSON snapshots and website CSV exports).
 
-The API returns one JSON document per call::
+The PDQ API subscription has ended; nothing here makes network calls. Saved snapshots in
+``data/raw/*.json`` (replayed by ``ingest.py --reload-raw``) have this shape::
 
     {"status": "ok", "message": "", "prices_imported_at": "2026-09-30 14:30",
      "data": [{"zone": "PEACE", "zone_id": 1, "month": "OCT",
@@ -22,17 +23,13 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any
 
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
-
 import config
 
 log = logging.getLogger(__name__)
 
 
-class PDQAPIError(RuntimeError):
-    """Raised when the PDQ API cannot be reached or returns an unusable payload."""
+class PDQParseError(RuntimeError):
+    """Raised when a saved PDQ payload is unusable."""
 
 
 @dataclass(frozen=True)
@@ -160,7 +157,7 @@ def clean_basis(value: Any, commodity: str) -> float | None:
 def parse_imported_at(value: Any) -> datetime:
     """Parse PDQ's ``prices_imported_at`` (``YYYY-MM-DD HH:MM``)."""
     if not isinstance(value, str):
-        raise PDQAPIError(f"prices_imported_at missing or not a string: {value!r}")
+        raise PDQParseError(f"prices_imported_at missing or not a string: {value!r}")
     text = value.strip()
     try:
         return datetime.strptime(text, config.PDQ_IMPORTED_AT_FORMAT)
@@ -168,7 +165,7 @@ def parse_imported_at(value: Any) -> datetime:
         try:
             return datetime.fromisoformat(text)
         except ValueError as exc:
-            raise PDQAPIError(f"Unparseable prices_imported_at: {value!r}") from exc
+            raise PDQParseError(f"Unparseable prices_imported_at: {value!r}") from exc
 
 
 def parse_record(row: dict[str, Any], imported_at: datetime) -> PDQPriceRecord:
@@ -230,18 +227,18 @@ def parse_payload(payload: dict[str, Any]) -> PDQSnapshot:
     raises.
 
     Raises:
-        PDQAPIError: if the payload is not a usable PDQ response.
+        PDQParseError: if the payload is not a usable PDQ response.
     """
     if not isinstance(payload, dict):
-        raise PDQAPIError(f"Expected a JSON object, got {type(payload).__name__}")
+        raise PDQParseError(f"Expected a JSON object, got {type(payload).__name__}")
     status = str(payload.get("status", "")).lower()
     if status != "ok":
-        raise PDQAPIError(f"PDQ returned status={status!r} message={payload.get('message')!r}")
+        raise PDQParseError(f"PDQ returned status={status!r} message={payload.get('message')!r}")
 
     imported_at = parse_imported_at(payload.get("prices_imported_at"))
     rows = payload.get("data")
     if not isinstance(rows, list) or not rows:
-        raise PDQAPIError("PDQ payload has no data rows")
+        raise PDQParseError("PDQ payload has no data rows")
 
     records: list[PDQPriceRecord] = []
     seen: set[tuple[int, str, str]] = set()
@@ -259,72 +256,5 @@ def parse_payload(payload: dict[str, Any]) -> PDQSnapshot:
         records.append(record)
 
     if not records:
-        raise PDQAPIError("No PDQ rows passed validation")
+        raise PDQParseError("No PDQ rows passed validation")
     return PDQSnapshot(imported_at=imported_at, records=records, raw=payload)
-
-
-# --------------------------------------------------------------------------- #
-# HTTP
-# --------------------------------------------------------------------------- #
-class PDQClient:
-    """Thin ``requests`` wrapper with retries and timeouts for the PDQ API."""
-
-    def __init__(
-        self,
-        url: str = config.PDQ_URL,
-        timeout: float = config.HTTP_TIMEOUT_SECONDS,
-        max_retries: int = config.HTTP_MAX_RETRIES,
-        session: requests.Session | None = None,
-    ) -> None:
-        self.url = url
-        self.timeout = timeout
-        self.session = session or self._build_session(max_retries)
-
-    @staticmethod
-    def _build_session(max_retries: int) -> requests.Session:
-        retry = Retry(
-            total=max_retries,
-            connect=max_retries,
-            read=max_retries,
-            status=max_retries,
-            backoff_factor=config.HTTP_BACKOFF_FACTOR,
-            status_forcelist=config.HTTP_RETRY_STATUSES,
-            allowed_methods=frozenset({"GET"}),
-            raise_on_status=False,
-        )
-        session = requests.Session()
-        session.mount("https://", HTTPAdapter(max_retries=retry))
-        session.mount("http://", HTTPAdapter(max_retries=retry))
-        session.headers.update({"User-Agent": config.HTTP_USER_AGENT, "Accept": "application/json"})
-        return session
-
-    def fetch_json(self) -> dict[str, Any]:
-        """GET the endpoint and return the decoded JSON body.
-
-        Raises:
-            PDQAPIError: on network failure, non-2xx status, or invalid JSON.
-        """
-        try:
-            response = self.session.get(self.url, timeout=self.timeout)
-        except requests.RequestException as exc:
-            raise PDQAPIError(f"PDQ request failed: {exc}") from exc
-        if not response.ok:
-            raise PDQAPIError(f"PDQ returned HTTP {response.status_code}: {response.text[:200]}")
-        try:
-            return response.json()
-        except (ValueError, json.JSONDecodeError) as exc:
-            raise PDQAPIError(f"PDQ returned invalid JSON: {response.text[:200]}") from exc
-
-    def fetch(self) -> PDQSnapshot:
-        """Fetch and parse the current PDQ price snapshot."""
-        return parse_payload(self.fetch_json())
-
-    def close(self) -> None:
-        """Close the underlying HTTP session."""
-        self.session.close()
-
-    def __enter__(self) -> PDQClient:
-        return self
-
-    def __exit__(self, *exc: object) -> None:
-        self.close()

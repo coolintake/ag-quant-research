@@ -33,7 +33,7 @@ import duckdb
 import pandas as pd
 
 import config
-from pdq_client import PDQPriceRecord
+from pdq_parsing import PDQPriceRecord
 
 log = logging.getLogger(__name__)
 

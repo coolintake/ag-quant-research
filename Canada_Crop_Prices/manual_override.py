@@ -29,7 +29,7 @@ import pandas as pd
 
 import config
 from database import UNIFIED_COLUMNS, UNIFIED_KEY, PriceDatabase
-from pdq_client import resolve_delivery_year
+from pdq_parsing import resolve_delivery_year
 
 log = logging.getLogger(__name__)
 
