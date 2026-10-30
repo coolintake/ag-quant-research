@@ -1,0 +1,54 @@
+USER GUIDE - WORKSPACE_CANADASD
+Written in ASD-STE100 Simplified Technical English.
+==========================================================================
+
+1. PURPOSE
+--------------------------------------------------------------------------
+This project builds the Canada supply and demand (S&D) balance sheets for
+grains, oilseeds, pulses, vegetable oils and protein meals.
+It uses StatCan CANSIM tables and CIMT trade data. It makes monthly and
+annual tables, then adds the analyst forecasts.
+CMFT_Main.csv is the only mapping source. ENGINE_RULES.md holds all rules.
+
+2. HOW TO RUN / REFRESH
+--------------------------------------------------------------------------
+Open a terminal in this folder. Do these steps in sequence:
+  1. Put the new StatCan CSV files in Data_Inputs/<name>_<table>-eng/.
+  2. Make sure that the newest CIMT files are in ..\CIMTD\.
+  3. Check the inputs and the mapping table:
+       python Engine/run_pipeline.py --check
+  4. Run the full engine (check, balance, export):
+       python Engine/run_pipeline.py
+  5. Look at the forecast layout. Then do a dry run:
+       python Engine/populate_input_forecast.py --inspect
+       python Engine/populate_input_forecast.py
+  6. Close CanSD_Input_wb.xlsx in Excel. Then write the forecasts:
+       python Engine/populate_input_forecast.py --write
+  7. Open CanSD_Input_wb.xlsx in Excel. Save it, then close it.
+     This step calculates the formula results.
+  8. Build the merged workbook:
+       python Engine/merge_main_workbook.py
+
+3. HOW TO VIEW OUTPUTS
+--------------------------------------------------------------------------
+  - Engine workbook: Outputs/CanadaSD_Engine.xlsx.
+    The summary tabs come first (Can_Cereals_Yr, Can_Oilseeds_Yr, ...).
+  - History and forecast: Outputs/CanadaSD_Main.xlsx.
+    Red cells show a forecast that is lower than the last actual year.
+  - Fact tables: data_store/CMFT_Master.csv, CMFT_VegOil_Master.csv,
+    CMFT_Meal_Master.csv.
+  - Run logs: logs/.
+An empty cell means that the year is not complete. This is correct.
+
+4. HOW TO ARCHIVE / MAINTENANCE
+--------------------------------------------------------------------------
+  - Do not edit Outputs/CanadaSD_Engine.xlsx by hand. Each export
+    replaces it. Make mock-ups in a copy.
+  - Do not change the Wheat_Mo_F, Durum_Mo_F or Canola_Mo_F tabs.
+  - The --write step makes a backup of the input workbook. Keep it.
+  - If --write stops because of ~$CanSD_Input_wb.xlsx, close Excel.
+    Delete the lock file only when Excel is not open.
+  - Put retired files in Archive/. Do not delete them.
+  - Do not write to CanadaSD_Main.xlsx in this folder or to ..\CIMTD\.
+  - Read ENGINE_RULES.md before you change the engine. Use the rule IDs
+    in the commit message.

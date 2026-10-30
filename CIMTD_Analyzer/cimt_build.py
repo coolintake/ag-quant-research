@@ -1,18 +1,26 @@
 """
 cimt_build.py
 =============
-Reads every CIMT zip file in your CIMTD folder, builds a full 2012-2026
-pivot table per commodity (Exports and Imports), and saves one Excel
-workbook per commodity.
+Reads every CIMT zip file in your CIMTD folder, builds a full pivot table per
+commodity (Exports and Imports), and saves one Excel workbook per commodity.
 
-Run after cimt_download.py has populated the CIMTD folder.
+Run after cimt_download.py has populated the CIMTD folder
+(and after cimt_legacy_adapter.py if you want 2002-2011 legacy coverage).
 
-OUTPUT (per commodity, e.g. CIMT_Canola_20260411.xlsx)
--------------------------------------------------------
-  Exports    Years x Months pivot  (KMT, whole numbers)
-  Imports    Years x Months pivot  (KMT, whole numbers)
-  Raw Data   Flat table with Country, HS6, Year, Month, KMT, Value(CAD)
-             — use column filters to slice by country / HS6 code
+OUTPUT — standard commodities (HS6, e.g. CIMT_Canola_20260411.xlsx)
+-------------------------------------------------------------------
+  Exports      Crop years x marketing-year months + crop-year total (KMT)
+  Imports      Crop years x marketing-year months + crop-year total (KMT)
+  Dest (Exp)   Top destinations + regional breakdown by crop year
+  Dest (Imp)   Top origins + regional breakdown by crop year
+  Raw Data     Flat table with Country, HS6, Year, Month, KMT, Value(CAD)
+
+OUTPUT — pulse workbooks (HS8, from ODPFN017 exports / ODPFN014 imports)
+------------------------------------------------------------------------
+  CIMT_Total_Peas_<date>.xlsx      Total Peas | Yellow Peas | Green Peas
+  CIMT_Total_Lentils_<date>.xlsx   Total Lentils | Red Lentils | Green Lentils
+  CIMT_Chickpeas_<date>.xlsx       Chickpeas
+  Each sheet: Exports pivot (top block) + Imports pivot (bottom block)
 """
 
 import zipfile
@@ -31,6 +39,8 @@ from openpyxl.utils import get_column_letter
 
 CIMTD = Path(r"C:\Users\ahmed\OneDrive\Desktop\Python\CIMTD")
 
+# Pulses (peas, lentils, chickpeas) are NOT in this dict — they are built at
+# HS8 resolution by the pulse pipeline further down (HS8_SUB_COMMODITY_MAP).
 COMMODITY_CONFIG = {
     "Amber Durum": {
         "hs6_codes": [100111, 100119],
@@ -54,7 +64,7 @@ COMMODITY_CONFIG = {
     },
     "Corn": {
         "hs6_codes": [100510, 100590],
-        "crop_year_start_month": 8,
+        "crop_year_start_month": 9,       # Sep/Aug
         "top_destinations": 10,
     },
     "Barley": {
@@ -62,34 +72,24 @@ COMMODITY_CONFIG = {
         "crop_year_start_month": 8,
         "top_destinations": 10,
     },
-    "Red Lentils": {
-        "hs6_codes": [71340, 71341],
-        "crop_year_start_month": 8,
-        "top_destinations": 10,
-    },
-    "Yellow Peas": {
-        "hs6_codes": [71310, 71390],
-        "crop_year_start_month": 8,
-        "top_destinations": 10,
-    },
     "Canola Oil": {
         "hs6_codes": [151411, 151419],   # crude + refined low-erucic acid rape/canola oil
-        "crop_year_start_month": 8,
+        "crop_year_start_month": 9,       # Sep/Aug
         "top_destinations": 10,
     },
     "Canola Meal": {
         "hs6_codes": [230641],           # oilcake/solid residues of low-erucic acid rape
-        "crop_year_start_month": 8,
+        "crop_year_start_month": 9,       # Sep/Aug
         "top_destinations": 10,
     },
     "Soybean Oil": {
         "hs6_codes": [150710, 150790],   # crude + other soybean oil
-        "crop_year_start_month": 9,
+        "crop_year_start_month": 10,      # Oct/Sep
         "top_destinations": 10,
     },
     "Soybean Meal": {
         "hs6_codes": [230400],           # oilcake and solid residues of soybeans
-        "crop_year_start_month": 9,
+        "crop_year_start_month": 10,      # Oct/Sep
         "top_destinations": 10,
     },
     "Oats": {
@@ -104,6 +104,124 @@ COMMODITY_CONFIG = {
             110412: 1.65,   # rolled/flaked oats (TNE)
             110422: 1.65,   # hulled/pearled oats (KGM — pipeline divides by 1,000,000)
         },
+    },
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PULSE HS8 CODE MAPS
+# Verified against ODPF_2_HS8Desc.TXT extracted from StatsCan CIMT zips.
+# Codes evolve across three vintages: pre-2001, 2001-2016, 2017-present.
+# HS8 codes are stored as integers (leading zero dropped: 07131010 -> 7131010).
+# ─────────────────────────────────────────────────────────────────────────────
+
+HS8_SUB_COMMODITY_MAP = {
+    # ── PEAS (Chapter 0713.10)
+    "Total Peas": {
+        "hs8_int": [
+            7131010,   # seed for sowing (1988-present) ← all eras
+            7131090,   # peas NES (expired 2000) ← legacy catch-all
+            7131020,   # peas split (expired 2016) ← historical
+            7131091,   # green peas NES (2001-2016)
+            7131092,   # yellow peas NES (2001-2016)
+            7131099,   # peas NES (2001-present)
+            7131021,   # organic yellow peas (2017-present)
+            7131029,   # organic other peas (2017-present)
+            7131093,   # split dried NES (2017-present)
+            7131094,   # green peas NES (2017-present)
+            7131095,   # yellow peas NES (2017-present)
+        ],
+    },
+    "Yellow Peas": {
+        # Yellow + split (split peas are commercially yellow in Canada)
+        "hs8_int": [
+            7131010,   # seed for sowing (all eras — commercially yellow proxy)
+            7131020,   # peas split (exp 2016) ← dominated by yellow
+            7131092,   # yellow peas NES (2001-2016)
+            7131021,   # organic yellow (2017-present)
+            7131093,   # split dried NES (2017-present) ← commercially yellow
+            7131095,   # yellow NES non-organic (2017-present)
+        ],
+    },
+    "Green Peas": {
+        "hs8_int": [
+            7131091,   # green peas NES (2001-2016)
+            7131029,   # organic other peas (2017-present) ← incl. green
+            7131094,   # green peas NES (2017-present)
+        ],
+    },
+
+    # ── LENTILS (Chapter 0713.40)
+    "Total Lentils": {
+        "hs8_int": [
+            7134000,   # all lentils (expired 1998) ← legacy catch-all
+            7134010,   # lentil seeds for sowing (1999-present)
+            7134090,   # other lentils (1999-2000)
+            7134091,   # green lentils (2001-2016)
+            7134092,   # red lentils (2003-2016)
+            7134099,   # lentils NES (2001-present)
+            7134021,   # organic green (2017-present)
+            7134022,   # organic red (2017-present)
+            7134029,   # organic lentils NES (2017-present)
+            7134094,   # non-organic green (2017-present)
+            7134095,   # non-organic red (2017-present)
+        ],
+    },
+    "Red Lentils": {
+        "hs8_int": [
+            7134010,   # seed (1999-present) ← proxy for commercial red in early years
+            7134092,   # red lentils (2003-2016)
+            7134022,   # organic red (2017-present)
+            7134095,   # non-organic red (2017-present)
+        ],
+    },
+    "Green Lentils": {
+        "hs8_int": [
+            7134091,   # green lentils (2001-2016)
+            7134021,   # organic green (2017-present)
+            7134094,   # non-organic green (2017-present)
+        ],
+    },
+
+    # ── CHICKPEAS (Chapter 0713.20)
+    # Note: 07132020 does NOT appear in ODPF_2_HS8Desc.TXT — not a valid CA code
+    "Chickpeas": {
+        "hs8_int": [
+            7132000,   # all chickpeas (expired 2000) ← legacy catch-all
+            7132010,   # chickpea seeds for sowing (2001-present)
+            7132091,   # Kabuli chickpeas (2001-present)
+            7132099,   # chickpeas NES (2001-present)
+        ],
+    },
+}
+
+# Flat HS8 filter set for early loading (avoids reading 4M rows per zip)
+PULSE_HS8_FILTER = {
+    code
+    for sub in HS8_SUB_COMMODITY_MAP.values()
+    for code in sub["hs8_int"]
+}
+
+PULSE_GROUPS = {
+    "Total_Peas": {
+        "filename":  "CIMT_Total_Peas_{date}.xlsx",
+        "sheets": ["Total Peas", "Yellow Peas", "Green Peas"],
+        "raw_data_from": "Total Peas",      # flat Raw Data sheet at the end
+        "crop_year_start_month": 8,
+        "top_destinations": 10,
+    },
+    "Total_Lentils": {
+        "filename":  "CIMT_Total_Lentils_{date}.xlsx",
+        "sheets": ["Total Lentils", "Red Lentils", "Green Lentils"],
+        "raw_data_from": "Total Lentils",   # flat Raw Data sheet at the end
+        "crop_year_start_month": 8,
+        "top_destinations": 10,
+    },
+    "Chickpeas": {
+        "filename":  "CIMT_Chickpeas_{date}.xlsx",
+        "sheets": ["Chickpeas"],
+        "raw_data_from": "Chickpeas",       # flat Raw Data sheet at the end
+        "crop_year_start_month": 8,
+        "top_destinations": 10,
     },
 }
 
@@ -576,26 +694,38 @@ def apply_ge_multipliers(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
 # PIVOT BUILDER
 # =============================================================================
 
-def build_pivot(df: pd.DataFrame, trade_type: str) -> pd.DataFrame:
+def build_pivot(df: pd.DataFrame, trade_type: str,
+                crop_start: int = 1) -> pd.DataFrame:
     """
-    Returns Years (rows) x Jan-Dec (cols) pivot of KMT.
-    Values are rounded to whole integers, matching the target display format.
+    Returns Crop Years (rows) x months in marketing-year order (cols) of KMT.
+      crop_start = 8  -> rows '12/13', columns Aug ... Jul
+      crop_start = 10 -> rows '12/13', columns Oct ... Sep
+    The writer adds a total column, so each row sums to the crop-year total.
     Empty months are left blank (None).
     """
-    sub = df[df["TradeType"] == trade_type]
+    sub = df[df["TradeType"] == trade_type].copy()
     if sub.empty:
         return pd.DataFrame()
 
+    month_order   = [((crop_start - 1 + i) % 12) + 1 for i in range(12)]
+    sub["CYStart"] = sub["Year"].where(sub["Month"] >= crop_start, sub["Year"] - 1)
+
     piv = (
-        sub.groupby(["Year", "Month"])["KMT"]
+        sub.groupby(["CYStart", "Month"])["KMT"]
         .sum()
         .unstack("Month")
-        .reindex(columns=range(1, 13))
+        .reindex(columns=month_order)
+        .sort_index()
     )
-    piv.columns    = MONTH_ABBR
-    piv.index      = piv.index.astype(int)
-    piv.index.name = "Year"
+    piv.columns    = [calendar.month_abbr[m] for m in month_order]
+    piv.index      = [f"{str(y)[-2:]}/{str(y + 1)[-2:]}" for y in piv.index.astype(int)]
+    piv.index.name = "CropYear"
     return piv
+
+
+def _total_label(piv: pd.DataFrame) -> str:
+    """Header for the total column, e.g. 'Aug/Jul Total'."""
+    return f"{piv.columns[0]}/{piv.columns[-1]} Total"
 
 
 
@@ -774,30 +904,30 @@ def write_pivot_sheet(wb: Workbook, sheet_name: str,
     ws.row_dimensions[1].height = 20
 
     # ── Row 2: column headers
-    _hdr(ws, 2, 1, "Years (Period)", bg_hdr, align="left")
-    for ci, m in enumerate(MONTH_ABBR, 2):
+    _hdr(ws, 2, 1, "Crop Year", bg_hdr, align="left")
+    for ci, m in enumerate(piv.columns, 2):
         _hdr(ws, 2, ci, m, bg_hdr)
-    _hdr(ws, 2, total_cols, "Annual", C["dark"])
+    _hdr(ws, 2, total_cols, _total_label(piv), C["dark"])
 
     # ── Data rows
     for ri, (year, row) in enumerate(piv.iterrows(), 3):
         alt = bg_dat if ri % 2 != 0 else C["white"]
 
-        # Year label cell
-        yc = ws.cell(ri, 1, int(year))
+        # Crop year label cell
+        yc = ws.cell(ri, 1, str(year))
         yc.font      = Font(bold=True, name="Calibri", size=10)
         yc.fill      = PatternFill("solid", fgColor=bg_yr)
         yc.alignment = Alignment(horizontal="center", vertical="center")
         yc.border    = BOX_L
 
         annual = 0
-        for ci, m in enumerate(MONTH_ABBR, 2):
+        for ci, m in enumerate(piv.columns, 2):
             v = row.get(m)
             _num(ws, ri, ci, v, alt)
             if pd.notna(v):
                 annual += float(v)
 
-        # Annual total
+        # Crop-year total
         ac = ws.cell(ri, total_cols)
         ac.value         = int(round(annual)) if annual else None
         ac.number_format = "#,##0"
@@ -807,23 +937,27 @@ def write_pivot_sheet(wb: Workbook, sheet_name: str,
         ac.border        = BOX
 
     # ── Column widths
-    ws.column_dimensions["A"].width = 16   # "Years (Period)"
+    ws.column_dimensions["A"].width = 12   # "Crop Year"
     for ci in range(2, total_cols):
         ws.column_dimensions[get_column_letter(ci)].width = 8
-    ws.column_dimensions[get_column_letter(total_cols)].width = 10
+    ws.column_dimensions[get_column_letter(total_cols)].width = 14
 
     ws.row_dimensions[2].height = 16
     ws.freeze_panes = "B3"
 
 
-def write_raw_sheet(wb: Workbook, df: pd.DataFrame, commodity: str):
+def write_raw_sheet(wb: Workbook, df: pd.DataFrame, commodity: str,
+                    cols: list = None):
     """
     Flat table of every row for this commodity.
     Use the column autofilters to slice by Country, HS6, TradeType, Year, Month.
     This replaces the pivot slicer functionality.
+
+    cols: column list; defaults to the standard 7. Pulse workbooks append HS8
+          at the end so the first 7 columns line up with the grain workbooks.
     """
     ws   = wb.create_sheet("Raw Data")
-    cols = ["Year", "Month", "TradeType", "HS6", "Country", "KMT", "ValueCAD"]
+    cols = cols or ["Year", "Month", "TradeType", "HS6", "Country", "KMT", "ValueCAD"]
 
     # ── Header
     for ci, h in enumerate(cols, 1):
@@ -842,7 +976,7 @@ def write_raw_sheet(wb: Workbook, df: pd.DataFrame, commodity: str):
             if col in ("Year", "Month"):
                 cell.value      = int(v) if pd.notna(v) else None
                 cell.alignment  = Alignment(horizontal="center")
-            elif col == "HS6":
+            elif col in ("HS6", "HS8"):
                 cell.value      = int(v) if pd.notna(v) else None
                 cell.alignment  = Alignment(horizontal="center")
             elif col == "KMT":
@@ -865,7 +999,7 @@ def write_raw_sheet(wb: Workbook, df: pd.DataFrame, commodity: str):
     # ── Column widths
     widths = {
         "Year": 7, "Month": 7, "TradeType": 10,
-        "HS6": 10, "Country": 28, "KMT": 12, "ValueCAD": 14
+        "HS6": 10, "HS8": 10, "Country": 28, "KMT": 12, "ValueCAD": 14
     }
     for ci, col in enumerate(cols, 1):
         ws.column_dimensions[get_column_letter(ci)].width = widths.get(col, 10)
@@ -884,17 +1018,21 @@ def write_raw_sheet(wb: Workbook, df: pd.DataFrame, commodity: str):
 
 def write_destinations_sheet(wb: Workbook, commodity: str,
                               dest_df: pd.DataFrame, reg_df: pd.DataFrame,
-                              trade_type: str):
+                              trade_type: str, sheet_prefix: str = ""):
     """
     Writes two tables to the Destinations sheet.
     Layout (transposed): Rows = Country/Region, Columns = Crop Years
     Block 1 — Top-N countries by crop year
     Block 2 — Regional breakdown by crop year
+
+    sheet_prefix: prepended to the tab name so several commodities can share
+                  one workbook (e.g. "Yellow Peas Dest (Exp)"). Empty for the
+                  standard one-commodity workbooks -> "Dest (Exp)".
     """
     if (dest_df is None or dest_df.empty) and (reg_df is None or reg_df.empty):
         return
 
-    sheet_label = f"Dest ({trade_type[:3]})"
+    sheet_label = f"{sheet_prefix}Dest ({trade_type[:3]})"[:31]   # Excel 31-char limit
     ws   = wb.create_sheet(sheet_label)
     bg_h = C["exp_hdr"] if trade_type == "Export" else C["imp_hdr"]
     bg_f = C["exp_yr"]  if trade_type == "Export" else C["imp_yr"]
@@ -992,6 +1130,345 @@ def write_destinations_sheet(wb: Workbook, commodity: str,
 
     ws.freeze_panes = "B3"
 
+
+# =============================================================================
+# HS8 DATA LOADER (PULSE WORKBOOKS)
+# Uses ODPFN017 (export HS8) and ODPFN014 (import HS10 → truncated to HS8)
+# =============================================================================
+
+def _find_pulse_csv(zf: zipfile.ZipFile, trade_type: str) -> str:
+    """
+    Exports → ODPFN017 (HS8 level)
+    Imports → ODPFN014 (HS10 level; we truncate to HS8 on load)
+    """
+    prefix = "ODPFN017" if trade_type == "Export" else "ODPFN014"
+    match  = next(
+        (n for n in zf.namelist()
+         if Path(n).name.startswith(prefix) and n.endswith(".csv")),
+        None,
+    )
+    if not match:
+        raise FileNotFoundError(
+            f"No {prefix} CSV found in {zf.filename}. "
+            f"Contents: {zf.namelist()}"
+        )
+    return match
+
+
+def read_zip_hs8(zip_path: Path, hs8_filter: set) -> pd.DataFrame:
+    """
+    Read one zip at HS8 resolution.
+    Exports: reads ODPFN017 (column = HS8, 7-digit integer without leading zero).
+    Imports: reads ODPFN014 (column = HS10, 9-digit integer); truncates to HS8.
+    Returns normalised schema: Year|Month|TradeType|HS8|Country|KMT|ValueCAD
+    """
+    trade_type = detect_trade_type(zip_path)
+    print(f"  {zip_path.name:<40} [{trade_type} HS8]", end="  ", flush=True)
+
+    with zipfile.ZipFile(zip_path) as zf:
+        country_map = parse_country_lookup(zf)
+        csv_path    = _find_pulse_csv(zf, trade_type)
+
+        chunks = []
+        with zf.open(csv_path) as f:
+            for chunk in pd.read_csv(
+                f, encoding="latin-1", low_memory=False, chunksize=200_000
+            ):
+                # Normalise bilingual column names
+                rename = {}
+                for col in chunk.columns:
+                    c    = col.lower()
+                    base = col.split("/")[0].strip()
+                    if "yearmonth" in c or "annee" in c:
+                        rename[col] = "YearMonth"
+                    elif base in ("HS8", "HS10"):
+                        rename[col] = "HSCode"
+                    elif "country" in c or "pays" in c:
+                        rename[col] = "CountryCode"
+                    elif "quantity" in c or "quantit" in c:
+                        rename[col] = "Quantity"
+                    elif "unit" in c or "mesure" in c:
+                        rename[col] = "UOM"
+                    elif "value" in c or "valeur" in c:
+                        rename[col] = "ValueCAD"
+                chunk = chunk.rename(columns=rename)
+
+                # Derive HS8 integer (NaN-safe)
+                # Exports: HSCode is already HS8 (7-digit int, no leading zero)
+                # Imports: HSCode is HS10 (9-digit int); zero-pad to 10 → first 8 chars
+                code_num = pd.to_numeric(chunk["HSCode"], errors="coerce")
+                if trade_type == "Export":
+                    chunk["HS8"] = code_num
+                else:
+                    hs10_str = (
+                        code_num.dropna().astype("int64").astype(str).str.zfill(10)
+                    )
+                    chunk["HS8"] = pd.to_numeric(hs10_str.str[:8], errors="coerce")
+                    # rows with unparseable HS10 stay NaN and get filtered out below
+
+                # Early filter to pulse codes
+                chunk = chunk[chunk["HS8"].isin(hs8_filter)]
+                if not chunk.empty:
+                    chunks.append(chunk)
+
+    print(f"{sum(len(c) for c in chunks):>8,} rows (filtered)")
+
+    if not chunks:
+        return pd.DataFrame(
+            columns=["Year", "Month", "TradeType", "HS8", "Country", "KMT", "ValueCAD"]
+        )
+
+    df = pd.concat(chunks, ignore_index=True)
+    df["HS8"] = df["HS8"].astype("int64")
+
+    # Parse YearMonth → Year, Month
+    ym          = df["YearMonth"].astype(int).astype(str).str.zfill(6)
+    df["Year"]  = ym.str[:4].astype(int)
+    df["Month"] = ym.str[4:6].astype(int)
+
+    # Country code → full English name
+    df["Country"] = (
+        df["CountryCode"].astype(str).str.strip()
+        .map(country_map)
+        .fillna(df["CountryCode"].astype(str).str.strip())
+    )
+
+    # Quantity → KMT (all pulse codes are KGM)
+    df["Quantity"] = pd.to_numeric(df["Quantity"], errors="coerce").fillna(0)
+    if "UOM" in df.columns:
+        uom = df["UOM"].astype(str).str.strip().str.upper()
+        df["KMT"] = float("nan")
+        df.loc[uom.isin(["KGM", "KGE"]), "KMT"] = (
+            df.loc[uom.isin(["KGM", "KGE"]), "Quantity"] / 1_000_000
+        )
+        df.loc[uom == "TNE", "KMT"] = df.loc[uom == "TNE", "Quantity"] / 1_000
+    else:
+        df["KMT"] = df["Quantity"] / 1_000_000  # fallback — assume KGM
+
+    if "ValueCAD" in df.columns:
+        df["ValueCAD"] = pd.to_numeric(df["ValueCAD"], errors="coerce").fillna(0)
+    else:
+        df["ValueCAD"] = 0
+    df["TradeType"] = trade_type
+
+    # Aggregate to HS8 × country level (imports have province × state rows)
+    df = df.dropna(subset=["KMT"])
+    df = (
+        df.groupby(["Year", "Month", "TradeType", "HS8", "Country"], as_index=False)
+        .agg({"KMT": "sum", "ValueCAD": "sum"})
+    )
+    return df[["Year", "Month", "TradeType", "HS8", "Country", "KMT", "ValueCAD"]]
+
+
+def load_all_zips_hs8(folder: Path) -> pd.DataFrame:
+    """
+    Load all CIMT zips at HS8 resolution for pulse workbooks.
+    Uses ODPFN017 (export) and ODPFN014 (import HS10 → HS8 truncated).
+    Only reads rows matching PULSE_HS8_FILTER codes.
+    """
+    zips = sorted(folder.glob("CIMT-CICM_*.zip"))
+    if not zips:
+        raise RuntimeError(f"No CIMT zip files found in {folder}")
+
+    frames = []
+
+    # Legacy parquet (2002-2011) is HS6-only, so it can't be split into
+    # yellow/green or red/green. Rows are loaded for schema compatibility but
+    # won't match any HS8 sheet code — pulse sheets rely on the zips themselves.
+    legacy_path = folder / "cimt_legacy_2002_2011.parquet"
+    if legacy_path.exists():
+        leg = pd.read_parquet(legacy_path)
+        pulse_hs6_parents = {71310, 71320, 71340}   # peas, chickpeas, lentils at HS6
+        leg_pulse = leg[leg["HS6"].isin(pulse_hs6_parents)].copy()
+        if not leg_pulse.empty:
+            leg_pulse = leg_pulse.rename(columns={"HS6": "HS8"})
+            frames.append(leg_pulse)
+            print(f"  Legacy pulse data: {len(leg_pulse):,} rows "
+                  f"(HS6-level, {leg_pulse['Year'].min()}-{leg_pulse['Year'].max()})")
+
+    master_lookup = build_master_country_lookup(zips)
+    print(f"\n  Pulse HS8 filter: {len(PULSE_HS8_FILTER)} codes | "
+          f"Loading {len(zips)} zips...\n")
+
+    for z in zips:
+        try:
+            frames.append(read_zip_hs8(z, PULSE_HS8_FILTER))
+        except FileNotFoundError as e:
+            print(f"  SKIP {z.name}: {e}")
+        except Exception as e:
+            print(f"  ERROR {z.name}: {e}")
+
+    if not frames:
+        raise RuntimeError("No HS8 pulse data loaded.")
+
+    df = pd.concat(frames, ignore_index=True)
+
+    # Final country code resolution pass
+    unresolved = df["Country"].astype(str).str.len() == 2
+    if unresolved.any():
+        df.loc[unresolved, "Country"] = (
+            df.loc[unresolved, "Country"]
+            .map(master_lookup)
+            .fillna(df.loc[unresolved, "Country"])
+        )
+
+    df = df.drop_duplicates(
+        subset=["Year", "Month", "TradeType", "HS8", "Country"]
+    ).sort_values(["TradeType", "Year", "Month", "Country"])
+
+    print(f"\n  HS8 pulse dataset: {len(df):,} rows | "
+          f"Years {df['Year'].min()}-{df['Year'].max()}")
+    return df
+
+
+# =============================================================================
+# PULSE WORKBOOK WRITER
+# =============================================================================
+
+def write_pulse_combined_sheet(
+    wb: Workbook,
+    sheet_name: str,
+    df_hs8: pd.DataFrame,
+    hs8_codes: list,
+    crop_start: int,
+):
+    """
+    Writes one sheet for a pulse sub-commodity.
+    Layout: Exports pivot (top block) + Imports pivot (bottom block).
+    """
+    ws     = wb.create_sheet(sheet_name[:31])   # Excel 31-char limit
+    codes  = set(hs8_codes)
+    df_sub = df_hs8[df_hs8["HS8"].isin(codes)].copy()
+
+    piv_exp = build_pivot(df_sub, "Export", crop_start)
+    piv_imp = build_pivot(df_sub, "Import", crop_start)
+
+    # ── Shared geometry
+    total_cols = 1 + 12 + 1   # label + 12 months + Annual
+
+    def write_block(piv, start_row, trade_type, label):
+        if piv is None or piv.empty:
+            return start_row
+
+        bg_h   = C["exp_hdr"]  if trade_type == "Export" else C["imp_hdr"]
+        bg_yr  = C["exp_yr"]   if trade_type == "Export" else C["imp_yr"]
+        bg_dat = C["exp_data"] if trade_type == "Export" else C["imp_data"]
+
+        # Section title
+        ws.merge_cells(
+            start_row=start_row, start_column=1,
+            end_row=start_row, end_column=total_cols
+        )
+        tc = ws.cell(start_row, 1, f"{label}  —  {trade_type}s (KMT)")
+        tc.font      = Font(bold=True, color="FFFFFF", size=11, name="Calibri")
+        tc.fill      = PatternFill("solid", fgColor=C["dark"])
+        tc.alignment = Alignment(horizontal="center", vertical="center")
+        ws.row_dimensions[start_row].height = 20
+
+        # Column headers
+        _hdr(ws, start_row + 1, 1, "Crop Year", bg_h, align="center")
+        for ci, m in enumerate(piv.columns, 2):
+            _hdr(ws, start_row + 1, ci, m, bg_h)
+        _hdr(ws, start_row + 1, total_cols, _total_label(piv), C["dark"])
+
+        # Data rows
+        for ri, (year, row) in enumerate(piv.iterrows(), start_row + 2):
+            alt = bg_dat if ri % 2 != 0 else C["white"]
+            yc  = ws.cell(ri, 1, str(year))
+            yc.font      = Font(bold=True, name="Calibri", size=10)
+            yc.fill      = PatternFill("solid", fgColor=bg_yr)
+            yc.alignment = Alignment(horizontal="center", vertical="center")
+            yc.border    = BOX_L
+
+            annual = 0
+            for ci, m in enumerate(piv.columns, 2):
+                v = row.get(m)
+                _num(ws, ri, ci, v, alt)
+                if pd.notna(v):
+                    annual += float(v)
+
+            ac = ws.cell(ri, total_cols)
+            ac.value         = int(round(annual)) if annual else None
+            ac.number_format = "#,##0"
+            ac.font          = Font(bold=True, name="Calibri", size=10)
+            ac.fill          = PatternFill("solid", fgColor=C["tot_fill"])
+            ac.alignment     = Alignment(horizontal="right", vertical="center")
+            ac.border        = BOX
+
+        return start_row + 2 + len(piv) + 2   # next free row
+
+    next_row = write_block(piv_exp, 1, "Export", sheet_name)
+    next_row += 1
+    write_block(piv_imp, next_row, "Import", sheet_name)
+
+    # Column widths
+    ws.column_dimensions["A"].width = 12
+    for ci in range(2, total_cols):
+        ws.column_dimensions[get_column_letter(ci)].width = 8
+    ws.column_dimensions[get_column_letter(total_cols)].width = 14
+    ws.freeze_panes = "B3"
+
+
+def build_pulse_workbooks(df_hs8: pd.DataFrame, today: str) -> None:
+    """
+    Generates the three pulse workbooks from HS8 data:
+      CIMT_Total_Peas_<date>.xlsx    → Total Peas, Yellow Peas, Green Peas
+      CIMT_Total_Lentils_<date>.xlsx → Total Lentils, Red Lentils, Green Lentils
+      CIMT_Chickpeas_<date>.xlsx     → Chickpeas
+
+    For each sub-commodity the workbook gets three tabs, in this order:
+      <name>                   Exports pivot (top) + Imports pivot (bottom)
+      <name> Dest (Exp)        Top destinations + regional breakdown by crop year
+      <name> Dest (Imp)        Top origins + regional breakdown by crop year
+    """
+    for group_name, group_cfg in PULSE_GROUPS.items():
+        print(f"\n── {group_name}")
+        wb = Workbook()
+        wb.remove(wb.active)
+
+        crop_start = group_cfg["crop_year_start_month"]
+        top_n      = group_cfg.get("top_destinations", 10)
+
+        for sheet_name in group_cfg["sheets"]:
+            hs8_codes = HS8_SUB_COMMODITY_MAP[sheet_name]["hs8_int"]
+            df_sub = df_hs8[df_hs8["HS8"].isin(hs8_codes)]
+            n_exp  = (df_sub["TradeType"] == "Export").sum()
+            n_imp  = (df_sub["TradeType"] == "Import").sum()
+            print(f"   {sheet_name:<20} {len(df_sub):,} rows "
+                  f"({n_exp:,} exp / {n_imp:,} imp)")
+            write_pulse_combined_sheet(wb, sheet_name, df_hs8, hs8_codes, crop_start)
+
+            # Destinations + Regional tabs (same builders as the grain workbooks)
+            for trade_type in ("Export", "Import"):
+                write_destinations_sheet(
+                    wb, sheet_name,
+                    build_destinations(df_sub, trade_type, crop_start, top_n),
+                    build_regions(df_sub, trade_type, crop_start),
+                    trade_type,
+                    sheet_prefix=f"{sheet_name} ",
+                )
+
+        # ── Flat Raw Data sheet (for SUMIFS / Power Query into the S&D)
+        # Year | Month | TradeType | HS6 | Country | KMT | ValueCAD | HS8
+        # First 7 columns match the grain workbooks; HS8 at the end allows
+        # yellow/green or red/green splits.
+        raw_src = group_cfg.get("raw_data_from")
+        if raw_src:
+            raw_codes = HS8_SUB_COMMODITY_MAP[raw_src]["hs8_int"]
+            df_raw = df_hs8[df_hs8["HS8"].isin(raw_codes)].copy()
+            df_raw["HS6"] = df_raw["HS8"].astype("int64") // 100   # 7131095 -> 71310
+            write_raw_sheet(
+                wb, df_raw, raw_src,
+                cols=["Year", "Month", "TradeType", "HS6", "Country",
+                      "KMT", "ValueCAD", "HS8"],
+            )
+            print(f"   Raw Data             {len(df_raw):,} rows")
+
+        fname = CIMTD / group_cfg["filename"].format(date=today)
+        wb.save(fname)
+        print(f"   Saved -> {fname.name}")
+
+
 # =============================================================================
 # MAIN
 # =============================================================================
@@ -1004,6 +1481,7 @@ def main():
     df_all = load_all_zips(CIMTD)
     today  = date.today().strftime("%Y%m%d")
 
+    # ── Standard commodities: one workbook per commodity
     for commodity, cfg in COMMODITY_CONFIG.items():
         print(f"── {commodity}")
         df_c = df_all[df_all["HS6"].isin(cfg["hs6_codes"])].copy()
@@ -1022,8 +1500,8 @@ def main():
         crop_start = cfg["crop_year_start_month"]
         top_n      = cfg.get("top_destinations", 10)
 
-        piv_exp  = build_pivot(df_c, "Export")
-        piv_imp  = build_pivot(df_c, "Import")
+        piv_exp  = build_pivot(df_c, "Export", crop_start)
+        piv_imp  = build_pivot(df_c, "Import", crop_start)
         dest_exp = build_destinations(df_c, "Export", crop_start, top_n)
         dest_imp = build_destinations(df_c, "Import", crop_start, top_n)
         reg_exp  = build_regions(df_c, "Export", crop_start)
@@ -1042,7 +1520,12 @@ def main():
         wb.save(fname)
         print(f"   Saved -> {fname.name}\n")
 
-    print("Done.")
+    # ── Pulse workbooks: load HS8 data separately, build 3 grouped workbooks
+    print("\n── Loading HS8 pulse data (ODPFN017 exports / ODPFN014 imports)...")
+    df_hs8 = load_all_zips_hs8(CIMTD)
+    build_pulse_workbooks(df_hs8, today)
+
+    print("\nDone.")
 
 
 if __name__ == "__main__":
