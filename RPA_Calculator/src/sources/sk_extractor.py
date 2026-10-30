@@ -1,9 +1,9 @@
-"""Phase 1.2 - raw table extraction from the Saskatchewan Crop Planning Guide PDFs.
+"""Saskatchewan Crop Planning Guide extractor: pure extraction.
 
-Reads every RPA-SK-<year>.pdf detected by config.verify_environment() and writes the
-raw table structures to output/raw_extracted_tables.json. Nothing is normalized or
-mapped to MVS commodities here; cells keep their printed strings (a parsed float is
-carried alongside for convenience). Normalization is Phase 1.3.
+Reads the SK guides (docs/AGENT_RULES.json provinces.SK.source) and writes the raw table
+structures to output/sk/intermediate/sk_raw_tables.json. Nothing is normalized or mapped to
+crop keys here; cells keep their printed strings (a parsed float is carried alongside).
+Normalization is src/normalize/sk_mvs.py.
 
 Two source layouts:
     zone_per_page  (2019)       one budget page per soil zone, crops as columns;
@@ -17,8 +17,8 @@ Rows are rebuilt from word coordinates rather than pdfplumber's ruled-table find
 which drops the label on every shaded row of these budgets.
 
 Usage:
-    python src/pdf_parser.py                 # all detected years
-    python src/pdf_parser.py --years 2019 2024
+    python -m src.sources.sk_extractor                 # all detected years
+    python -m src.sources.sk_extractor --years 2019 2024
 """
 
 from __future__ import annotations
@@ -32,7 +32,9 @@ from pathlib import Path
 
 import pdfplumber
 
-from config import INPUT_PDF_DIR, RAW_TABLES_JSON, verify_environment
+from ..config import province, verify_environment
+
+SPEC = province("SK")
 
 PARSER_VERSION = "1.2.0"
 
@@ -533,10 +535,10 @@ def summarize(doc: dict) -> str:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--years", type=int, nargs="*", help="limit to these years")
-    ap.add_argument("--out", type=Path, default=RAW_TABLES_JSON)
+    ap.add_argument("--out", type=Path, default=SPEC.raw_json)
     args = ap.parse_args(argv)
 
-    pdfs = verify_environment(INPUT_PDF_DIR)
+    pdfs = verify_environment("SK")
     if args.years:
         pdfs = {y: p for y, p in pdfs.items() if y in args.years}
     if not pdfs:
@@ -554,7 +556,7 @@ def main(argv: list[str] | None = None) -> int:
         "meta": {
             "parser_version": PARSER_VERSION,
             "generated_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-            "source_dir": str(INPUT_PDF_DIR),
+            "source_dir": str(SPEC.input_dir),
             "years": [d["year"] for d in documents],
             "notes": "Raw strings as printed; 'numbers' holds parsed floats. "
                      "'checks' are arithmetic cross-checks of the extraction.",

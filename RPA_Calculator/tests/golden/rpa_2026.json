@@ -1,0 +1,1527 @@
+{
+ "year": 2026,
+ "description": "Master workbook RPA_Summary values recalculated in Excel, at Last Yr inputs and at sample_inputs. Every change to these numbers is a methodology decision and is logged under revisions.",
+ "workbook": {
+  "last_yr": {
+   "SK": {
+    "wheat_spring": {
+     "yield": 55.0,
+     "price": 7.0,
+     "revenue": 385.0,
+     "seed": 25.786667,
+     "fert": 109.36417353495837,
+     "chem": 84.683333,
+     "cost": 219.83417353495838,
+     "rpa": 165.16582646504162,
+     "base": 165.16582646504162,
+     "be_price": 3.9969849733628795,
+     "be_yield": 31.404881933565484
+    },
+    "wheat_cps": {
+     "yield": 55.0,
+     "price": 7.0,
+     "revenue": 385.0,
+     "seed": 25.786667,
+     "fert": 109.36417353495837,
+     "chem": 84.683333,
+     "cost": 219.83417353495838,
+     "rpa": 165.16582646504162,
+     "base": 165.16582646504162,
+     "be_price": 3.9969849733628795,
+     "be_yield": 31.404881933565484
+    },
+    "canola": {
+     "yield": 43.0,
+     "price": 13.2,
+     "revenue": 567.6,
+     "seed": 93.35,
+     "fert": 103.23703244452823,
+     "chem": 87.183333,
+     "cost": 283.77036544452824,
+     "rpa": 283.8296345554718,
+     "base": 283.8296345554718,
+     "be_price": 6.599310824291354,
+     "be_yield": 21.497754957918808
+    },
+    "durum": {
+     "yield": 49.0,
+     "price": 7.84,
+     "revenue": 384.15999999999997,
+     "seed": 30.885,
+     "fert": 97.06100845870374,
+     "chem": 44.19,
+     "cost": 172.13600845870374,
+     "rpa": 212.02399154129623,
+     "base": 212.02399154129623,
+     "be_price": 3.5129797644633416,
+     "be_yield": 21.956123527895887
+    },
+    "lentils_red": {
+     "yield": 1642.0,
+     "price": 22.0,
+     "revenue": 361.24,
+     "seed": 25.17,
+     "fert": 20.410565525986186,
+     "chem": 103.76,
+     "cost": 149.3405655259862,
+     "rpa": 211.89943447401382,
+     "base": 211.89943447401382,
+     "be_price": 9.095040531424251,
+     "be_yield": 678.8207523908463
+    },
+    "peas_yellow": {
+     "yield": 2626.0,
+     "price": 13.0,
+     "revenue": 341.38,
+     "seed": 41.95,
+     "fert": 37.82159800488702,
+     "chem": 125.69,
+     "cost": 205.46159800488704,
+     "rpa": 135.91840199511296,
+     "base": 135.91840199511296,
+     "be_price": 7.824127875281303,
+     "be_yield": 1580.4738308068233
+    },
+    "barley_feed": {
+     "yield": 74.0,
+     "price": 5.03,
+     "revenue": 372.22,
+     "seed": 32.453333,
+     "fert": 97.66641789093012,
+     "chem": 52.41,
+     "cost": 182.5297508909301,
+     "rpa": 189.69024910906992,
+     "base": 189.69024910906992,
+     "be_price": 2.4666182552828393,
+     "be_yield": 36.288220853067614
+    },
+    "barley_malt": {
+     "yield": 61.0,
+     "price": 5.79,
+     "revenue": 353.19,
+     "seed": 32.343333,
+     "fert": 80.16668878248149,
+     "chem": 115.823333,
+     "cost": 228.33335478248148,
+     "rpa": 124.85664521751852,
+     "base": 124.85664521751849,
+     "be_price": 3.7431697505324832,
+     "be_yield": 39.43581257037677
+    },
+    "oats": {
+     "yield": 88.0,
+     "price": 3.79,
+     "revenue": 333.52,
+     "seed": 35.34,
+     "fert": 72.50218502076014,
+     "chem": 36.09,
+     "cost": 143.93218502076013,
+     "rpa": 189.58781497923985,
+     "base": 189.58781497923985,
+     "be_price": 1.635593011599547,
+     "be_yield": 37.976829820781035
+    },
+    "flax": {
+     "yield": 28.0,
+     "price": 16.5,
+     "revenue": 462.0,
+     "seed": 21.466667,
+     "fert": 67.74415456284075,
+     "chem": 57.773333,
+     "cost": 146.98415456284076,
+     "rpa": 315.0158454371592,
+     "base": 315.0158454371592,
+     "be_price": 5.249434091530027,
+     "be_yield": 8.908130579566107
+    },
+    "rye_hybrid_fall": {
+     "yield": 61.0,
+     "price": 4.83,
+     "revenue": 294.63,
+     "seed": 60.0,
+     "fert": 86.3596891066108,
+     "chem": 31.03,
+     "cost": 177.3896891066108,
+     "rpa": 117.24031089338919,
+     "base": 117.24031089338919,
+     "be_price": 2.9080276902723083,
+     "be_yield": 36.72664370737284
+    },
+    "soybeans": {
+     "yield": 29.0,
+     "price": 13.93,
+     "revenue": 403.96999999999997,
+     "seed": 128.1,
+     "fert": 25.339379213553226,
+     "chem": 77.57,
+     "cost": 231.00937921355322,
+     "rpa": 172.96062078644675,
+     "base": 172.96062078644675,
+     "be_price": 7.965840662536317,
+     "be_yield": 16.58358788324144
+    }
+   },
+   "AB": {
+    "wheat_spring": {
+     "yield": 50.0,
+     "price": 7.666666666666667,
+     "revenue": 383.33333333333337,
+     "seed": 30.0,
+     "fert": 78.50148290495302,
+     "chem": 53.69,
+     "cost": 162.19148290495303,
+     "rpa": 221.14185042838034,
+     "base": 221.14185042838034,
+     "be_price": 3.243829658099061,
+     "be_yield": 21.155410813689524
+    },
+    "wheat_cps": {
+     "yield": 54.0,
+     "price": 7.0,
+     "revenue": 378.0,
+     "seed": 29.41333333333333,
+     "fert": 78.50148290495302,
+     "chem": 53.69,
+     "cost": 161.60481623828633,
+     "rpa": 216.39518376171367,
+     "base": 216.39518376171367,
+     "be_price": 2.9926817821904876,
+     "be_yield": 23.08640231975519
+    },
+    "durum": {
+     "yield": 42.0,
+     "price": 7.9,
+     "revenue": 331.8,
+     "seed": 36.52,
+     "fert": 68.49095540289686,
+     "chem": 52.89,
+     "cost": 157.90095540289684,
+     "rpa": 173.89904459710317,
+     "base": 173.89904459710317,
+     "be_price": 3.7595465572118294,
+     "be_yield": 19.987462709227447
+    },
+    "canola": {
+     "yield": 37.0,
+     "price": 14.0,
+     "revenue": 518.0,
+     "seed": 81.55333333333333,
+     "fert": 108.10055625989719,
+     "chem": 26.86,
+     "cost": 216.51388959323054,
+     "rpa": 301.48611040676946,
+     "base": 301.48611040676946,
+     "be_price": 5.851726745762988,
+     "be_yield": 15.465277828087896
+    },
+    "barley_feed": {
+     "yield": 67.0,
+     "price": 5.349999999999999,
+     "revenue": 358.44999999999993,
+     "seed": 20.43666666666667,
+     "fert": 85.51109508989266,
+     "chem": 22.87,
+     "cost": 128.81776175655932,
+     "rpa": 229.6322382434406,
+     "base": 229.6322382434406,
+     "be_price": 1.9226531605456616,
+     "be_yield": 24.07808630963726
+    },
+    "barley_malt": {
+     "yield": 66.0,
+     "price": 6.2,
+     "revenue": 409.2,
+     "seed": 22.31333333333333,
+     "fert": 89.4818436897191,
+     "chem": 53.69,
+     "cost": 165.48517702305242,
+     "rpa": 243.71482297694757,
+     "base": 243.71482297694757,
+     "be_price": 2.507351167015946,
+     "be_yield": 26.691157584363292
+    },
+    "oats": {
+     "yield": 77.0,
+     "price": 3.6,
+     "revenue": 277.2,
+     "seed": 39.68,
+     "fert": 69.4029110268052,
+     "chem": 15.79,
+     "cost": 124.87291102680518,
+     "rpa": 152.3270889731948,
+     "base": 152.3270889731948,
+     "be_price": 1.621726117231236,
+     "be_yield": 34.686919729668105
+    },
+    "peas_yellow": {
+     "yield": 2980.0,
+     "price": 12.66666666666666,
+     "revenue": 377.46666666666647,
+     "seed": 44.71,
+     "fert": 31.67131897748689,
+     "chem": 41.08,
+     "cost": 117.4613189774869,
+     "rpa": 260.0053476891796,
+     "base": 260.0053476891796,
+     "be_price": 3.941654999244527,
+     "be_yield": 927.3262024538444
+    },
+    "lentils_red": {
+     "yield": 1513.0,
+     "price": 23.0,
+     "revenue": 347.99,
+     "seed": 29.4,
+     "fert": 24.852876988121235,
+     "chem": 60.35,
+     "cost": 114.60287698812124,
+     "rpa": 233.38712301187877,
+     "base": 233.38712301187877,
+     "be_price": 7.57454573616135,
+     "be_yield": 498.27337820922276
+    }
+   },
+   "MB": {
+    "wheat_spring": {
+     "yield": 66.0,
+     "price": 7.75,
+     "revenue": 511.5,
+     "seed": 32.0,
+     "fert": 132.8948432195915,
+     "chem": 50.25,
+     "cost": 215.1448432195915,
+     "rpa": 296.3551567804085,
+     "base": 296.3551567804085,
+     "be_price": 3.2597703518119925,
+     "be_yield": 27.760624931560194
+    },
+    "wheat_cps": {
+     "yield": 70.0,
+     "price": 7.25,
+     "revenue": 507.5,
+     "seed": 32.0,
+     "fert": 136.86287928245008,
+     "chem": 50.25,
+     "cost": 219.11287928245008,
+     "rpa": 288.3871207175499,
+     "base": 288.3871207175499,
+     "be_price": 3.1301839897492867,
+     "be_yield": 30.22246610792415
+    },
+    "barley_feed": {
+     "yield": 80.0,
+     "price": 4.25,
+     "revenue": 340.0,
+     "seed": 18.0,
+     "fert": 99.47811817977127,
+     "chem": 18.0,
+     "cost": 135.4781181797713,
+     "rpa": 204.5218818202287,
+     "base": 204.5218818202287,
+     "be_price": 1.6934764772471411,
+     "be_yield": 31.877204277593243
+    },
+    "oats": {
+     "yield": 120.0,
+     "price": 4.25,
+     "revenue": 510.0,
+     "seed": 23.13,
+     "fert": 102.48882963048275,
+     "chem": 20.75,
+     "cost": 146.36882963048276,
+     "rpa": 363.63117036951724,
+     "base": 363.63117036951724,
+     "be_price": 1.2197402469206897,
+     "be_yield": 34.43972461893712
+    },
+    "rye_hybrid_fall": {
+     "yield": 80.0,
+     "price": 6.0,
+     "revenue": 480.0,
+     "seed": 78.4,
+     "fert": 160.67109565960152,
+     "chem": 9.0,
+     "cost": 248.07109565960153,
+     "rpa": 231.92890434039847,
+     "base": 231.9289043403985,
+     "be_price": 3.1008886957450192,
+     "be_yield": 41.34518260993359
+    },
+    "corn": {
+     "yield": 145.0,
+     "price": 5.75,
+     "revenue": 833.75,
+     "seed": 100.0,
+     "fert": 201.71084131938,
+     "chem": 34.25,
+     "cost": 335.96084131938,
+     "rpa": 497.78915868062,
+     "base": 497.78915868062,
+     "be_price": 2.316971319444,
+     "be_yield": 58.42797240337043
+    },
+    "canola": {
+     "yield": 45.0,
+     "price": 14.25,
+     "revenue": 641.25,
+     "seed": 82.5,
+     "fert": 150.30094501394063,
+     "chem": 68.75,
+     "cost": 301.55094501394063,
+     "rpa": 339.69905498605937,
+     "base": 339.69905498605937,
+     "be_price": 6.701132111420903,
+     "be_yield": 21.161469825539694
+    },
+    "soybeans": {
+     "yield": 42.0,
+     "price": 12.75,
+     "revenue": 535.5,
+     "seed": 90.0,
+     "fert": 43.4235566544674,
+     "chem": 23.25,
+     "cost": 156.6735566544674,
+     "rpa": 378.8264433455326,
+     "base": 378.8264433455326,
+     "be_price": 3.730322777487319,
+     "be_yield": 12.288122090546462
+    },
+    "flax": {
+     "yield": 29.0,
+     "price": 15.0,
+     "revenue": 435.0,
+     "seed": 32.0,
+     "fert": 68.5058866165922,
+     "chem": 36.0,
+     "cost": 136.5058866165922,
+     "rpa": 298.4941133834078,
+     "base": 298.4941133834078,
+     "be_price": 4.707099538503179,
+     "be_yield": 9.100392441106147
+    },
+    "peas_yellow": {
+     "yield": 3300.0,
+     "price": 10.0,
+     "revenue": 330.0,
+     "seed": 49.5,
+     "fert": 28.825525988006515,
+     "chem": 42.5,
+     "cost": 120.82552598800652,
+     "rpa": 209.17447401199348,
+     "base": 209.17447401199348,
+     "be_price": 3.6613795753941374,
+     "be_yield": 1208.255259880065
+    }
+   }
+  },
+  "sample": {
+   "SK": {
+    "wheat_spring": {
+     "yield": 55.0,
+     "price": 10.15,
+     "revenue": 558.25,
+     "seed": 25.786667,
+     "fert": 91.9,
+     "chem": 84.683333,
+     "cost": 202.37,
+     "rpa": 355.88,
+     "base": 165.16582646504162,
+     "be_price": 3.6794545454545458,
+     "be_yield": 19.93793103448276
+    },
+    "wheat_cps": {
+     "yield": 55.0,
+     "price": 7.0,
+     "revenue": 385.0,
+     "seed": 25.786667,
+     "fert": 91.9,
+     "chem": 84.683333,
+     "cost": 202.37,
+     "rpa": 182.63,
+     "base": 165.16582646504162,
+     "be_price": 3.6794545454545458,
+     "be_yield": 28.91
+    },
+    "canola": {
+     "yield": 43.0,
+     "price": 14.5,
+     "revenue": 623.5,
+     "seed": 93.35,
+     "fert": 86.8,
+     "chem": 87.183333,
+     "cost": 267.333333,
+     "rpa": 356.166667,
+     "base": 283.8296345554718,
+     "be_price": 6.217054255813953,
+     "be_yield": 18.436781586206894
+    },
+    "durum": {
+     "yield": 49.0,
+     "price": 7.84,
+     "revenue": 384.15999999999997,
+     "seed": 30.885,
+     "fert": 81.55,
+     "chem": 44.19,
+     "cost": 156.625,
+     "rpa": 227.53499999999997,
+     "base": 212.02399154129623,
+     "be_price": 3.1964285714285716,
+     "be_yield": 19.977678571428573
+    },
+    "lentils_red": {
+     "yield": 1642.0,
+     "price": 32.0,
+     "revenue": 525.44,
+     "seed": 25.17,
+     "fert": 14.55,
+     "chem": 103.76,
+     "cost": 143.48000000000002,
+     "rpa": 381.96000000000004,
+     "base": 211.89943447401382,
+     "be_price": 8.738124238733255,
+     "be_yield": 448.37500000000006
+    },
+    "peas_yellow": {
+     "yield": 2626.0,
+     "price": 13.0,
+     "revenue": 341.38,
+     "seed": 41.95,
+     "fert": 26.966666666666676,
+     "chem": 125.69,
+     "cost": 194.60666666666668,
+     "rpa": 146.7733333333333,
+     "base": 135.91840199511296,
+     "be_price": 7.410764153338412,
+     "be_yield": 1496.9743589743591
+    },
+    "barley_feed": {
+     "yield": 74.0,
+     "price": 5.03,
+     "revenue": 372.22,
+     "seed": 32.453333,
+     "fert": 81.56666666666668,
+     "chem": 52.41,
+     "cost": 166.42999966666667,
+     "rpa": 205.79000033333335,
+     "base": 189.69024910906992,
+     "be_price": 2.2490540495495495,
+     "be_yield": 33.08747508283631
+    },
+    "barley_malt": {
+     "yield": 61.0,
+     "price": 5.79,
+     "revenue": 353.19,
+     "seed": 32.343333,
+     "fert": 66.91666666666666,
+     "chem": 115.823333,
+     "cost": 215.08333266666665,
+     "rpa": 138.10666733333335,
+     "base": 124.85664521751849,
+     "be_price": 3.5259562732240433,
+     "be_yield": 37.147380426021876
+    },
+    "oats": {
+     "yield": 88.0,
+     "price": 3.79,
+     "revenue": 333.52,
+     "seed": 35.34,
+     "fert": 60.81666666666666,
+     "chem": 36.09,
+     "cost": 132.24666666666667,
+     "rpa": 201.2733333333333,
+     "base": 189.58781497923985,
+     "be_price": 1.5028030303030304,
+     "be_yield": 34.89357959542656
+    },
+    "flax": {
+     "yield": 28.0,
+     "price": 16.5,
+     "revenue": 462.0,
+     "seed": 21.466667,
+     "fert": 57.53333333333333,
+     "chem": 57.773333,
+     "cost": 136.77333333333334,
+     "rpa": 325.2266666666667,
+     "base": 315.0158454371592,
+     "be_price": 4.884761904761905,
+     "be_yield": 8.28929292929293
+    },
+    "rye_hybrid_fall": {
+     "yield": 61.0,
+     "price": 4.83,
+     "revenue": 294.63,
+     "seed": 60.0,
+     "fert": 72.28333333333333,
+     "chem": 31.03,
+     "cost": 163.31333333333333,
+     "rpa": 131.31666666666666,
+     "base": 117.24031089338919,
+     "be_price": 2.6772677595628416,
+     "be_yield": 33.81228433402347
+    },
+    "soybeans": {
+     "yield": 29.0,
+     "price": 13.93,
+     "revenue": 403.96999999999997,
+     "seed": 128.1,
+     "fert": 18.066666666666663,
+     "chem": 77.57,
+     "cost": 223.73666666666665,
+     "rpa": 180.23333333333332,
+     "base": 172.96062078644675,
+     "be_price": 7.715057471264367,
+     "be_yield": 16.06149796602058
+    }
+   },
+   "AB": {
+    "wheat_spring": {
+     "yield": 50.0,
+     "price": 7.666666666666667,
+     "revenue": 383.33333333333337,
+     "seed": 30.0,
+     "fert": 83.2664128928116,
+     "chem": 53.69,
+     "cost": 166.9564128928116,
+     "rpa": 216.37692044052176,
+     "base": 221.14185042838034,
+     "be_price": 3.3391282578562325,
+     "be_yield": 21.776923420801513
+    },
+    "wheat_cps": {
+     "yield": 54.0,
+     "price": 7.0,
+     "revenue": 378.0,
+     "seed": 29.41333333333333,
+     "fert": 83.2664128928116,
+     "chem": 53.69,
+     "cost": 166.3697462261449,
+     "rpa": 211.6302537738551,
+     "base": 216.39518376171367,
+     "be_price": 3.080921226410091,
+     "be_yield": 23.767106603734987
+    },
+    "durum": {
+     "yield": 42.0,
+     "price": 7.9,
+     "revenue": 331.8,
+     "seed": 36.52,
+     "fert": 72.61521148018473,
+     "chem": 52.89,
+     "cost": 162.02521148018474,
+     "rpa": 169.77478851981527,
+     "base": 173.89904459710317,
+     "be_price": 3.857743130480589,
+     "be_yield": 20.509520440529712
+    },
+    "canola": {
+     "yield": 37.0,
+     "price": 15.0,
+     "revenue": 555.0,
+     "seed": 81.55333333333333,
+     "fert": 113.06610795486469,
+     "chem": 26.86,
+     "cost": 221.47944128819802,
+     "rpa": 333.520558711802,
+     "base": 301.48611040676946,
+     "be_price": 5.9859308456269735,
+     "be_yield": 14.765296085879868
+    },
+    "barley_feed": {
+     "yield": 67.0,
+     "price": 5.349999999999999,
+     "revenue": 358.44999999999993,
+     "seed": 20.43666666666667,
+     "fert": 90.79435263578999,
+     "chem": 22.87,
+     "cost": 134.10101930245665,
+     "rpa": 224.34898069754328,
+     "base": 229.6322382434406,
+     "be_price": 2.001507750782935,
+     "be_yield": 25.06561108457134
+    },
+    "barley_malt": {
+     "yield": 66.0,
+     "price": 6.2,
+     "revenue": 409.2,
+     "seed": 22.31333333333333,
+     "fert": 93.18512307012273,
+     "chem": 53.69,
+     "cost": 169.18845640345606,
+     "rpa": 240.01154359654393,
+     "base": 243.71482297694757,
+     "be_price": 2.563461460658425,
+     "be_yield": 27.288460710234848
+    },
+    "oats": {
+     "yield": 77.0,
+     "price": 3.6,
+     "revenue": 277.2,
+     "seed": 39.68,
+     "fert": 73.78633088311244,
+     "chem": 15.79,
+     "cost": 129.25633088311244,
+     "rpa": 147.94366911688755,
+     "base": 152.3270889731948,
+     "be_price": 1.678653647832629,
+     "be_yield": 35.904536356420124
+    },
+    "peas_yellow": {
+     "yield": 2980.0,
+     "price": 12.66666666666666,
+     "revenue": 377.46666666666647,
+     "seed": 44.71,
+     "fert": 31.676581186197943,
+     "chem": 41.08,
+     "cost": 117.46658118619794,
+     "rpa": 260.00008548046856,
+     "base": 260.0053476891796,
+     "be_price": 3.941831583429461,
+     "be_yield": 927.3677462068264
+    },
+    "lentils_red": {
+     "yield": 1513.0,
+     "price": 30.0,
+     "revenue": 453.9,
+     "seed": 29.4,
+     "fert": 24.872610270787685,
+     "chem": 60.35,
+     "cost": 114.62261027078767,
+     "rpa": 339.2773897292123,
+     "base": 233.38712301187877,
+     "be_price": 7.575849984850475,
+     "be_yield": 382.07536756929227
+    }
+   },
+   "MB": {
+    "wheat_spring": {
+     "yield": 66.0,
+     "price": 8.25,
+     "revenue": 544.5,
+     "seed": 32.0,
+     "fert": 125.69787341778621,
+     "chem": 50.25,
+     "cost": 207.9478734177862,
+     "rpa": 336.55212658221376,
+     "base": 296.3551567804085,
+     "be_price": 3.1507253548149428,
+     "be_yield": 25.205802838519542
+    },
+    "wheat_cps": {
+     "yield": 70.0,
+     "price": 7.25,
+     "revenue": 507.5,
+     "seed": 32.0,
+     "fert": 129.41187580588795,
+     "chem": 50.25,
+     "cost": 211.66187580588795,
+     "rpa": 295.8381241941121,
+     "base": 288.3871207175499,
+     "be_price": 3.0237410829412563,
+     "be_yield": 29.1947414904673
+    },
+    "barley_feed": {
+     "yield": 80.0,
+     "price": 4.25,
+     "revenue": 340.0,
+     "seed": 18.0,
+     "fert": 94.13720142630312,
+     "chem": 18.0,
+     "cost": 130.13720142630314,
+     "rpa": 209.86279857369686,
+     "base": 204.5218818202287,
+     "be_price": 1.6267150178287892,
+     "be_yield": 30.62051798265956
+    },
+    "oats": {
+     "yield": 120.0,
+     "price": 4.25,
+     "revenue": 510.0,
+     "seed": 23.13,
+     "fert": 97.25759136686011,
+     "chem": 20.75,
+     "cost": 141.1375913668601,
+     "rpa": 368.8624086331399,
+     "base": 363.63117036951724,
+     "be_price": 1.1761465947238343,
+     "be_yield": 33.208845027496494
+    },
+    "rye_hybrid_fall": {
+     "yield": 80.0,
+     "price": 6.0,
+     "revenue": 480.0,
+     "seed": 78.4,
+     "fert": 151.6958901344983,
+     "chem": 9.0,
+     "cost": 239.09589013449832,
+     "rpa": 240.90410986550168,
+     "base": 231.9289043403985,
+     "be_price": 2.988698626681229,
+     "be_yield": 39.849315022416384
+    },
+    "corn": {
+     "yield": 145.0,
+     "price": 5.75,
+     "revenue": 833.75,
+     "seed": 100.0,
+     "fert": 191.6268048201566,
+     "chem": 34.25,
+     "cost": 325.8768048201566,
+     "rpa": 507.8731951798434,
+     "base": 497.78915868062,
+     "be_price": 2.2474262401390113,
+     "be_yield": 56.67422692524463
+    },
+    "canola": {
+     "yield": 45.0,
+     "price": 14.5,
+     "revenue": 652.5,
+     "seed": 82.5,
+     "fert": 142.4549467310253,
+     "chem": 68.75,
+     "cost": 293.7049467310253,
+     "rpa": 358.7950532689747,
+     "base": 339.69905498605937,
+     "be_price": 6.526776594022785,
+     "be_yield": 20.255513567656916
+    },
+    "soybeans": {
+     "yield": 42.0,
+     "price": 12.25,
+     "revenue": 514.5,
+     "seed": 90.0,
+     "fert": 41.793757382325744,
+     "chem": 23.25,
+     "cost": 155.04375738232574,
+     "rpa": 359.45624261767426,
+     "base": 378.8264433455326,
+     "be_price": 3.6915180329125175,
+     "be_yield": 12.65663325570006
+    },
+    "flax": {
+     "yield": 29.0,
+     "price": 15.0,
+     "revenue": 435.0,
+     "seed": 32.0,
+     "fert": 64.96999686963542,
+     "chem": 36.0,
+     "cost": 132.96999686963542,
+     "rpa": 302.03000313036455,
+     "base": 298.4941133834078,
+     "be_price": 4.585172305849498,
+     "be_yield": 8.864666457975694
+    },
+    "peas_yellow": {
+     "yield": 3300.0,
+     "price": 10.0,
+     "revenue": 330.0,
+     "seed": 49.5,
+     "fert": 27.8299729886181,
+     "chem": 42.5,
+     "cost": 119.8299729886181,
+     "rpa": 210.1700270113819,
+     "base": 209.17447401199348,
+     "be_price": 3.631211302685397,
+     "be_yield": 1198.2997298861808
+    }
+   }
+  }
+ },
+ "sample_inputs": {
+  "SK": {
+   "nutrient_per_lb": {
+    "N": 0.75,
+    "P": 0.65,
+    "K": 0.45,
+    "S": 0.5
+   },
+   "bids": {
+    "wheat_spring": 10.15,
+    "canola": 14.5,
+    "lentils_red": 32.0
+   }
+  },
+  "AB": {
+   "quotes": {
+    "N": 915.7500000000001,
+    "P": 1256.23,
+    "K": 685.95,
+    "S": 624.16
+   },
+   "bids": {
+    "canola": 15.0,
+    "lentils_red": 30.0
+   }
+  },
+  "MB": {
+   "quotes": {
+    "N": 780.0,
+    "NH3": 1200.0,
+    "P": 1250.0,
+    "K": 620.0,
+    "S": 580.0
+   },
+   "bids": {
+    "wheat_spring": 8.25,
+    "canola": 14.5,
+    "soybeans": 12.25
+   }
+  }
+ },
+ "engine_pre_refactor": {
+  "SK": {
+   "wheat_spring": {
+    "baseline": {
+     "gross_revenue": 386.633331,
+     "direct_cash_inputs": 219.84,
+     "return_over_direct": 166.793331
+    },
+    "scenario": {
+     "gross_revenue": 560.6183299500001,
+     "direct_cash_inputs": 202.37,
+     "return_over_direct": 358.2483299500001
+    }
+   },
+   "wheat_cps": {
+    "baseline": {
+     "gross_revenue": 386.633331,
+     "direct_cash_inputs": 219.84,
+     "return_over_direct": 166.793331
+    },
+    "scenario": {
+     "gross_revenue": 386.633331,
+     "direct_cash_inputs": 202.37,
+     "return_over_direct": 184.263331
+    }
+   },
+   "canola": {
+    "baseline": {
+     "gross_revenue": 567.6,
+     "direct_cash_inputs": 288.2,
+     "return_over_direct": 279.40000000000003
+    },
+    "scenario": {
+     "gross_revenue": 623.5,
+     "direct_cash_inputs": 271.62,
+     "return_over_direct": 351.88
+    }
+   },
+   "durum": {
+    "baseline": {
+     "gross_revenue": 320.656,
+     "direct_cash_inputs": 154.48,
+     "return_over_direct": 166.17600000000002
+    },
+    "scenario": {
+     "gross_revenue": 320.656,
+     "direct_cash_inputs": 141.48,
+     "return_over_direct": 179.17600000000002
+    }
+   },
+   "lentils_red": {
+    "baseline": {
+     "gross_revenue": 326.128,
+     "direct_cash_inputs": 147.09,
+     "return_over_direct": 179.03799999999998
+    },
+    "scenario": {
+     "gross_revenue": 474.368,
+     "direct_cash_inputs": 141.88,
+     "return_over_direct": 332.488
+    }
+   },
+   "peas_yellow": {
+    "baseline": {
+     "gross_revenue": 349.44,
+     "direct_cash_inputs": 205.77,
+     "return_over_direct": 143.67
+    },
+    "scenario": {
+     "gross_revenue": 349.44,
+     "direct_cash_inputs": 194.7,
+     "return_over_direct": 154.74
+    }
+   },
+   "barley_feed": {
+    "baseline": {
+     "gross_revenue": 378.759,
+     "direct_cash_inputs": 178.27999999999997,
+     "return_over_direct": 200.47900000000004
+    },
+    "scenario": {
+     "gross_revenue": 378.759,
+     "direct_cash_inputs": 161.89999999999998,
+     "return_over_direct": 216.85900000000004
+    }
+   },
+   "barley_malt": {
+    "baseline": {
+     "gross_revenue": 357.243,
+     "direct_cash_inputs": 228.24,
+     "return_over_direct": 129.003
+    },
+    "scenario": {
+     "gross_revenue": 357.243,
+     "direct_cash_inputs": 214.69,
+     "return_over_direct": 142.553
+    }
+   },
+   "oats": {
+    "baseline": {
+     "gross_revenue": 493.83700000000005,
+     "direct_cash_inputs": 196.55,
+     "return_over_direct": 297.28700000000003
+    },
+    "scenario": {
+     "gross_revenue": 493.83700000000005,
+     "direct_cash_inputs": 179.24,
+     "return_over_direct": 314.59700000000004
+    }
+   },
+   "flax": {
+    "baseline": {
+     "gross_revenue": 460.34999999999997,
+     "direct_cash_inputs": 159.25,
+     "return_over_direct": 301.09999999999997
+    },
+    "scenario": {
+     "gross_revenue": 460.34999999999997,
+     "direct_cash_inputs": 148.91,
+     "return_over_direct": 311.43999999999994
+    }
+   },
+   "rye_hybrid_fall": {
+    "baseline": {
+     "gross_revenue": 250.194,
+     "direct_cash_inputs": 165.065,
+     "return_over_direct": 85.12899999999999
+    },
+    "scenario": {
+     "gross_revenue": 250.194,
+     "direct_cash_inputs": 152.98000000000002,
+     "return_over_direct": 97.21399999999997
+    }
+   },
+   "soybeans": {
+    "baseline": {
+     "gross_revenue": 463.86899999999997,
+     "direct_cash_inputs": 234.04,
+     "return_over_direct": 229.82899999999998
+    },
+    "scenario": {
+     "gross_revenue": 463.86899999999997,
+     "direct_cash_inputs": 225.89499999999998,
+     "return_over_direct": 237.974
+    }
+   }
+  },
+  "AB": {
+   "wheat_spring": {
+    "baseline": {
+     "gross_revenue": 380.77777777777777,
+     "direct_cash_inputs": 162.19148290495303,
+     "return_over_direct": 218.58629487282474
+    },
+    "scenario": {
+     "gross_revenue": 409.75,
+     "direct_cash_inputs": 157.8335199182625,
+     "return_over_direct": 251.9164800817375
+    }
+   },
+   "wheat_cps": {
+    "baseline": {
+     "gross_revenue": 380.33333333333337,
+     "direct_cash_inputs": 161.60481623828633,
+     "return_over_direct": 218.72851709504704
+    },
+    "scenario": {
+     "gross_revenue": 380.33333333333337,
+     "direct_cash_inputs": 157.24685325159584,
+     "return_over_direct": 223.08648008173753
+    }
+   },
+   "durum": {
+    "baseline": {
+     "gross_revenue": 327.85,
+     "direct_cash_inputs": 157.90095540289684,
+     "return_over_direct": 169.94904459710318
+    },
+    "scenario": {
+     "gross_revenue": 327.85,
+     "direct_cash_inputs": 154.07006114027877,
+     "return_over_direct": 173.77993885972126
+    }
+   },
+   "canola": {
+    "baseline": {
+     "gross_revenue": 518.0,
+     "direct_cash_inputs": 216.51388959323054,
+     "return_over_direct": 301.48611040676946
+    },
+    "scenario": {
+     "gross_revenue": 536.5,
+     "direct_cash_inputs": 210.639033000059,
+     "return_over_direct": 325.860966999941
+    }
+   },
+   "barley_feed": {
+    "baseline": {
+     "gross_revenue": 356.66666666666663,
+     "direct_cash_inputs": 128.81776175655932,
+     "return_over_direct": 227.8489049101073
+    },
+    "scenario": {
+     "gross_revenue": 356.66666666666663,
+     "direct_cash_inputs": 124.10300900941373,
+     "return_over_direct": 232.56365765725292
+    }
+   },
+   "barley_malt": {
+    "baseline": {
+     "gross_revenue": 411.26666666666665,
+     "direct_cash_inputs": 165.48517702305242,
+     "return_over_direct": 245.78148964361424
+    },
+    "scenario": {
+     "gross_revenue": 411.26666666666665,
+     "direct_cash_inputs": 160.39525492149065,
+     "return_over_direct": 250.871411745176
+    }
+   },
+   "oats": {
+    "baseline": {
+     "gross_revenue": 277.2,
+     "direct_cash_inputs": 124.87291102680518,
+     "return_over_direct": 152.3270889731948
+    },
+    "scenario": {
+     "gross_revenue": 277.2,
+     "direct_cash_inputs": 120.99951075974465,
+     "return_over_direct": 156.20048924025534
+    }
+   },
+   "peas_yellow": {
+    "baseline": {
+     "gross_revenue": 377.4666666666666,
+     "direct_cash_inputs": 117.4613189774869,
+     "return_over_direct": 260.0053476891797
+    },
+    "scenario": {
+     "gross_revenue": 377.4666666666666,
+     "direct_cash_inputs": 114.98003534016354,
+     "return_over_direct": 262.486631326503
+    }
+   },
+   "lentils_red": {
+    "baseline": {
+     "gross_revenue": 347.875,
+     "direct_cash_inputs": 114.60287698812124,
+     "return_over_direct": 233.27212301187876
+    },
+    "scenario": {
+     "gross_revenue": 453.75,
+     "direct_cash_inputs": 112.51023785744675,
+     "return_over_direct": 341.2397621425532
+    }
+   }
+  }
+ },
+ "revisions": [
+  {
+   "date": "2026-09-30",
+   "rule_id": "P0",
+   "note": "Snapshot taken before the P0 refactor; the refactor left every value unchanged."
+  },
+  {
+   "date": "2026-09-30",
+   "rule_id": "REGION-AVG-RULE",
+   "province": "SK",
+   "changed_crops": [
+    "wheat_spring",
+    "wheat_cps",
+    "canola",
+    "durum",
+    "lentils_red",
+    "peas_yellow",
+    "barley_feed",
+    "barley_malt",
+    "oats",
+    "flax",
+    "rye_hybrid_fall",
+    "soybeans"
+   ],
+   "note": "SK zone averaging unified with AB: general crops average Brown + Dark Brown + Black where published; durum and red lentils Brown + Dark Brown. Previously single zones (canola, peas, barley, flax: Dark Brown; durum, lentils: Brown; oats, soybeans: Black; fall rye: Brown + Dark Brown). AB unchanged.",
+   "previous_workbook": {
+    "last_yr": {
+     "SK": {
+      "wheat_spring": {
+       "yield": 55.0,
+       "price": 7.0,
+       "revenue": 385.0,
+       "seed": 25.786667,
+       "fert": 109.35922042174998,
+       "chem": 84.683333,
+       "cost": 219.82922042175,
+       "rpa": 165.17077957825,
+       "base": 165.17077957825,
+       "be_price": 3.9968949167590906,
+       "be_yield": 31.404174345964286
+      },
+      "wheat_cps": {
+       "yield": 55.0,
+       "price": 7.0,
+       "revenue": 385.0,
+       "seed": 25.786667,
+       "fert": 109.35922042174998,
+       "chem": 84.683333,
+       "cost": 219.82922042175,
+       "rpa": 165.17077957825,
+       "base": 165.17077957825,
+       "be_price": 3.9968949167590906,
+       "be_yield": 31.404174345964286
+      },
+      "canola": {
+       "yield": 43.0,
+       "price": 13.2,
+       "revenue": 567.6,
+       "seed": 93.35,
+       "fert": 103.91875326863753,
+       "chem": 90.92,
+       "cost": 288.1887532686375,
+       "rpa": 279.4112467313625,
+       "base": 279.4112467313625,
+       "be_price": 6.702064029503198,
+       "be_yield": 21.83248130823012
+      },
+      "durum": {
+       "yield": 41.0,
+       "price": 7.84,
+       "revenue": 321.44,
+       "seed": 29.49,
+       "fert": 80.7916231265513,
+       "chem": 44.19,
+       "cost": 154.4716231265513,
+       "rpa": 166.9683768734487,
+       "base": 166.9683768734487,
+       "be_price": 3.7676005640622265,
+       "be_yield": 19.703013153896848
+      },
+      "lentils_red": {
+       "yield": 1482.0,
+       "price": 22.0,
+       "revenue": 326.04,
+       "seed": 25.17,
+       "fert": 18.16091483045228,
+       "chem": 103.76,
+       "cost": 147.09091483045228,
+       "rpa": 178.94908516954774,
+       "base": 178.94908516954774,
+       "be_price": 9.92516294402512,
+       "be_yield": 668.5950674111467
+      },
+      "peas_yellow": {
+       "yield": 2688.0,
+       "price": 13.0,
+       "revenue": 349.44,
+       "seed": 41.95,
+       "fert": 38.57148081154841,
+       "chem": 125.25,
+       "cost": 205.77148081154843,
+       "rpa": 143.66851918845157,
+       "base": 143.66851918845157,
+       "be_price": 7.655189018286772,
+       "be_yield": 1582.8575447042185
+      },
+      "barley_feed": {
+       "yield": 75.0,
+       "price": 5.03,
+       "revenue": 377.25,
+       "seed": 32.07,
+       "fert": 99.1214483713117,
+       "chem": 47.08,
+       "cost": 178.2714483713117,
+       "rpa": 198.9785516286883,
+       "base": 198.9785516286883,
+       "be_price": 2.3769526449508227,
+       "be_yield": 35.44163983525083
+      },
+      "barley_malt": {
+       "yield": 62.0,
+       "price": 5.79,
+       "revenue": 358.98,
+       "seed": 31.96,
+       "fert": 81.8953349000847,
+       "chem": 114.38,
+       "cost": 228.2353349000847,
+       "rpa": 130.74466509991532,
+       "base": 130.74466509991532,
+       "be_price": 3.681215079033624,
+       "be_yield": 39.41888340243259
+      },
+      "oats": {
+       "yield": 130.0,
+       "price": 3.79,
+       "revenue": 492.7,
+       "seed": 42.34,
+       "fert": 107.44932145989925,
+       "chem": 46.75,
+       "cost": 196.53932145989927,
+       "rpa": 296.1606785401007,
+       "base": 296.1606785401007,
+       "be_price": 1.5118409343069175,
+       "be_yield": 51.85734075459084
+      },
+      "flax": {
+       "yield": 28.0,
+       "price": 16.5,
+       "revenue": 462.0,
+       "seed": 21.47,
+       "fert": 68.33408659085606,
+       "chem": 69.44,
+       "cost": 159.24408659085606,
+       "rpa": 302.75591340914394,
+       "base": 302.75591340914394,
+       "be_price": 5.687288806816288,
+       "be_yield": 9.651156763082184
+      },
+      "rye_hybrid_fall": {
+       "yield": 52.0,
+       "price": 4.83,
+       "revenue": 251.16,
+       "seed": 60.0,
+       "fert": 74.02951037922219,
+       "chem": 31.03,
+       "cost": 165.0595103792222,
+       "rpa": 86.10048962077781,
+       "base": 86.10048962077781,
+       "be_price": 3.1742213534465806,
+       "be_yield": 34.17381167271681
+      },
+      "soybeans": {
+       "yield": 33.0,
+       "price": 13.93,
+       "revenue": 459.69,
+       "seed": 128.1,
+       "fert": 28.36619782100034,
+       "chem": 77.57,
+       "cost": 234.03619782100031,
+       "rpa": 225.65380217899968,
+       "base": 225.65380217899968,
+       "be_price": 7.092005994575767,
+       "be_yield": 16.800875651184516
+      }
+     }
+    },
+    "sample": {
+     "SK": {
+      "wheat_spring": {
+       "yield": 55.0,
+       "price": 10.15,
+       "revenue": 558.25,
+       "seed": 25.786667,
+       "fert": 91.9,
+       "chem": 84.683333,
+       "cost": 202.37,
+       "rpa": 355.88,
+       "base": 165.17077957825,
+       "be_price": 3.6794545454545458,
+       "be_yield": 19.93793103448276
+      },
+      "wheat_cps": {
+       "yield": 55.0,
+       "price": 7.0,
+       "revenue": 385.0,
+       "seed": 25.786667,
+       "fert": 91.9,
+       "chem": 84.683333,
+       "cost": 202.37,
+       "rpa": 182.63,
+       "base": 165.17077957825,
+       "be_price": 3.6794545454545458,
+       "be_yield": 28.91
+      },
+      "canola": {
+       "yield": 43.0,
+       "price": 14.5,
+       "revenue": 623.5,
+       "seed": 93.35,
+       "fert": 87.35,
+       "chem": 90.92,
+       "cost": 271.62,
+       "rpa": 351.88,
+       "base": 279.4112467313625,
+       "be_price": 6.3167441860465114,
+       "be_yield": 18.732413793103447
+      },
+      "durum": {
+       "yield": 41.0,
+       "price": 7.84,
+       "revenue": 321.44,
+       "seed": 29.49,
+       "fert": 67.8,
+       "chem": 44.19,
+       "cost": 141.48,
+       "rpa": 179.96,
+       "base": 166.9683768734487,
+       "be_price": 3.450731707317073,
+       "be_yield": 18.04591836734694
+      },
+      "lentils_red": {
+       "yield": 1482.0,
+       "price": 32.0,
+       "revenue": 474.24,
+       "seed": 25.17,
+       "fert": 12.95,
+       "chem": 103.76,
+       "cost": 141.88,
+       "rpa": 332.36,
+       "base": 178.94908516954774,
+       "be_price": 9.573549257759783,
+       "be_yield": 443.375
+      },
+      "peas_yellow": {
+       "yield": 2688.0,
+       "price": 13.0,
+       "revenue": 349.44,
+       "seed": 41.95,
+       "fert": 27.5,
+       "chem": 125.25,
+       "cost": 194.7,
+       "rpa": 154.74,
+       "base": 143.66851918845157,
+       "be_price": 7.24330357142857,
+       "be_yield": 1497.6923076923076
+      },
+      "barley_feed": {
+       "yield": 75.0,
+       "price": 5.03,
+       "revenue": 377.25,
+       "seed": 32.07,
+       "fert": 82.75,
+       "chem": 47.08,
+       "cost": 161.89999999999998,
+       "rpa": 215.35000000000002,
+       "base": 198.9785516286883,
+       "be_price": 2.1586666666666665,
+       "be_yield": 32.18687872763419
+      },
+      "barley_malt": {
+       "yield": 62.0,
+       "price": 5.79,
+       "revenue": 358.98,
+       "seed": 31.96,
+       "fert": 68.35,
+       "chem": 114.38,
+       "cost": 214.69,
+       "rpa": 144.29000000000002,
+       "base": 130.74466509991532,
+       "be_price": 3.462741935483871,
+       "be_yield": 37.07944732297064
+      },
+      "oats": {
+       "yield": 130.0,
+       "price": 3.79,
+       "revenue": 492.7,
+       "seed": 42.34,
+       "fert": 90.15,
+       "chem": 46.75,
+       "cost": 179.24,
+       "rpa": 313.46,
+       "base": 296.1606785401007,
+       "be_price": 1.3787692307692307,
+       "be_yield": 47.29287598944591
+      },
+      "flax": {
+       "yield": 28.0,
+       "price": 16.5,
+       "revenue": 462.0,
+       "seed": 21.47,
+       "fert": 58.0,
+       "chem": 69.44,
+       "cost": 148.91,
+       "rpa": 313.09000000000003,
+       "base": 302.75591340914394,
+       "be_price": 5.318214285714285,
+       "be_yield": 9.024848484848485
+      },
+      "rye_hybrid_fall": {
+       "yield": 52.0,
+       "price": 4.83,
+       "revenue": 251.16,
+       "seed": 60.0,
+       "fert": 61.95,
+       "chem": 31.03,
+       "cost": 152.98000000000002,
+       "rpa": 98.17999999999998,
+       "base": 86.10048962077781,
+       "be_price": 2.9419230769230773,
+       "be_yield": 31.672877846790893
+      },
+      "soybeans": {
+       "yield": 33.0,
+       "price": 13.93,
+       "revenue": 459.69,
+       "seed": 128.1,
+       "fert": 20.225,
+       "chem": 77.57,
+       "cost": 225.89499999999998,
+       "rpa": 233.79500000000002,
+       "base": 225.65380217899968,
+       "be_price": 6.84530303030303,
+       "be_yield": 16.216439339554917
+      }
+     }
+    }
+   }
+  },
+  {
+   "date": "2026-10-01",
+   "rule_id": "PROV-MB",
+   "province": "MB",
+   "note": "Manitoba added from the MB Agriculture COP workbooks (2026 guide, province-wide). SK and AB unchanged."
+  },
+  {
+   "date": "2026-10-01",
+   "rule_id": "CROP-MAP",
+   "province": "AB",
+   "removed_crops": [
+    "chickpeas_kabuli"
+   ],
+   "note": "Kabuli Chickpeas dropped from the calculator (minor crop); every other AB value unchanged.",
+   "previous_workbook": {
+    "last_yr": {
+     "AB": {
+      "chickpeas_kabuli": {
+       "yield": 1463.0,
+       "price": 26.0,
+       "revenue": 380.38,
+       "seed": 87.6,
+       "fert": 31.768995052621175,
+       "chem": 52.03,
+       "cost": 171.39899505262116,
+       "rpa": 208.98100494737884,
+       "base": 208.98100494737884,
+       "be_price": 11.715584077417713,
+       "be_yield": 659.2269040485429
+      }
+     }
+    },
+    "sample": {
+     "AB": {
+      "chickpeas_kabuli": {
+       "yield": 1463.0,
+       "price": 26.0,
+       "revenue": 380.38,
+       "seed": 87.6,
+       "fert": 31.65848866968906,
+       "chem": 52.03,
+       "cost": 171.28848866968906,
+       "rpa": 209.09151133031094,
+       "base": 208.98100494737884,
+       "be_price": 11.708030667784625,
+       "be_yield": 658.801879498804
+      }
+     }
+    }
+   }
+  }
+ ]
+}

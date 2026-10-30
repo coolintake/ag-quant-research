@@ -1,0 +1,54 @@
+USER GUIDE - RPA_CALCULATOR
+Written in ASD-STE100 Simplified Technical English.
+==========================================================================
+
+1. PURPOSE
+--------------------------------------------------------------------------
+This project calculates the Return over direct cash inputs (RPA) per acre
+for Prairie crops in Alberta, Saskatchewan and Manitoba (2019 to 2026).
+  - C (Gross Revenue) = target yield x farm price.
+  - D (Direct Cash Costs) = seed + fertilizer + chemicals.
+  - RPA = C - D.
+It reads the provincial crop planning guides. It makes a master Excel
+calculator, analytics JSON files and the RPA Diagnostics dashboard.
+
+2. HOW TO RUN / REFRESH
+--------------------------------------------------------------------------
+Open a terminal in this folder (RPA_Calculator). Do these steps:
+  1. Put new guides in the input folders:
+       RPA_AB_Input/RPA-AB-<year>.pdf
+       RPA_SK_Input/RPA-SK-<year>.pdf
+       RPA_MB_Input/cop-crop-production-<year>.xlsm
+  2. Update the price files in Input_Prices/ if necessary.
+  3. Run all stages for all provinces:
+       python -m src.pipeline
+  4. To run one stage or one province, use these options:
+       python -m src.pipeline --stage normalize
+       python -m src.pipeline --province AB --stage extract
+  5. To check the workbook formulas in Excel, add --verify.
+  6. To fill current prices from Input_Prices/, use this command:
+       python -m src.outputs.excel --prices-asof YYYY-MM-DD
+Use "python -m". Do not run the files in src/ directly.
+To test the code, use this command:
+       python -m pytest tests
+
+3. HOW TO VIEW OUTPUTS
+--------------------------------------------------------------------------
+  - Master calculator: output/RPA_Master_Calculator.xlsx.
+  - Alberta reference tables: output/AB_AgriProfit_Reference_Tables.xlsx.
+  - Province data: output/ab/, output/sk/, output/mb/.
+  - Analytics JSON: output/analytics/.
+  - Dashboard: go to output/RPA_Dashboard/ and use this command:
+       streamlit run app/dashboard.py
+  - Client workbook (guide prices only):
+       python scripts/export_diagnostics.py
+
+4. HOW TO ARCHIVE / MAINTENANCE
+--------------------------------------------------------------------------
+  - Close the workbooks in Excel before you run the pipeline.
+    The pipeline replaces them.
+  - Keep a copy of RPA_Master_Calculator.xlsx before each new guide year.
+  - Keep mock-ups in a different file (for example, *_MOCK.xlsx).
+  - docs/AGENT_RULES.json holds all rules. If you change a rule, also
+    change docs/METHODOLOGY.md. The tests make sure that they agree.
+  - Keep the old guide files. Do not delete them.

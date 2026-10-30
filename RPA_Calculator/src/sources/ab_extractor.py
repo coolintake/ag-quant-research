@@ -1,53 +1,39 @@
-"""Alberta AgriProfit$ "Cropping Alternatives" parser (2019-2026).
+"""Alberta AgriProfit$ "Cropping Alternatives" extractor (2019-2026): pure extraction.
 
-Reads RPA_AB_Input/RPA-AB-<year>.pdf and extracts, per year x soil zone x crop:
+Reads the AB guides (docs/AGENT_RULES.json provinces.AB.source) and writes every table as
+printed to output/ab/intermediate/ab_raw_tables.json:
 
-    budget (Tables 3-8)  expected yield and market price, crop sales, seed, fertilizer $
-                         and its NPKS blend (lb N-P2O5-K2O-S /ac), chemical, total direct
-                         expense, contribution margin, break-even yield
-    Table 1              seeding rate (bu/ac or lb/ac) and seed $/ac by zone
-    Table 2              chemical $/ac by zone (pre-seed + in-crop + F/I/PH/D)
-    methodology          published fertilizer prices ($/lb N, P, K, S and $/tonne quotes)
+    budget tables (Tables 3-8)  one per region: per column the header / crop name / grade and
+                                every row (yield, price, sales, seed, fertilizer $, NPKS blend,
+                                chemical, ... total direct expense, contribution, break-even)
+    Table 1 / Table 2           seeding rate + seed $/ac, chemical $/ac, by region
+    methodology                 published fertilizer prices ($/lb and $/tonne product quotes)
 
-Every budget column is cross-checked against the page's own arithmetic and the side
-tables: sales = yield x price, line items sum to total direct expense, fertilizer $ =
-NPKS x published $/lb, seed $ = Table 1, chemical $ = Table 2.
+No crop mapping, region rule or override happens here (see src/normalize/ab_cop.py).
+2019's budget tables are embedded images and the 2024-25 pages have a letter-spaced text
+layer: both are read with the Windows OCR engine (3 rendered variants that vote cell by cell),
+cached under output/ab/intermediate/ocr/.
 
-2019's budget tables are embedded images. They are read with the Windows OCR engine
-(Windows.Media.Ocr via PowerShell, cached under output/ab/intermediate/ocr/); OCR'd
-values that fail a cross-check are corrected only from an independent source (Table 1
-seed, Table 2 chemical, NPKS x price) and flagged, otherwise left flagged, never guessed.
-
-Outputs
-    output/ab/intermediate/ab_raw_tables.json          every column of every table
-    output/ab/mvs/ab_historical_cop_2019_2026.{json,csv}  mapped crops (config.AB_CROPS)
-
-Usage (from RPA_Calculator/):
-    python -m src.pdf_parser_ab
-    python -m src.pdf_parser_ab --years 2025 2026
+    python -m src.sources.ab_extractor [--years 2025 2026]
 """
 
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import re
 import statistics
 import subprocess
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))  # flat imports under `python -m src.…`
+import pdfplumber
 
-import pdfplumber  # noqa: E402
+from ..config import province, source_pdfs
+from .sk_extractor import group_lines, to_number
 
-from config import (AB_CROPS, AB_INPUT_PDF_DIR, AB_INTERMEDIATE_DIR, AB_OCR_CACHE_DIR,  # noqa: E402
-                    AB_OUTPUT_CSV, AB_OUTPUT_JSON, AB_RAW_JSON, AB_ZONES, PDF_YEAR_PATTERN, YEARS)
-from pdf_parser import group_lines, to_number  # noqa: E402
-
-PARSER_VERSION = "1.0.0"
+SPEC = province("AB")
+PARSER_VERSION = "2.0.0"
 OCR_DPI = 400
 TABLE_ZONE_ORDER = ["black", "brown", "dark_brown", "grey_wooded", "peace", "irrigated"]   # Tables 1 & 2
 
@@ -81,21 +67,11 @@ CROP_WORDS = {"spring", "wheat", "cps", "durum", "soft", "white", "winter", "fee
               "oats", "argentine", "ht", "polish", "canola", "field", "yellow", "peas", "pea", "red", "green",
               "lentil", "lentils", "kabuli", "desi", "chickpea", "chickpeas", "mustard", "mixed", "alfalfa", "hay",
               "cereal", "silage", "flax", "dry", "beans", "bean", "triticale", "timothy", "hybrid", "fall", "rye"}
-LB_SEEDED = {"canola", "lentils_red", "chickpeas_kabuli"}   # Table 1 rate is lb/ac for these
-SEED_FROM_TABLE1 = {"lentils_red"}   # budget seed $ known to be wrong; Table 1 is authoritative
 
 
 # ---------------------------------------------------------------------------
 # Words (text layer, wide-spaced text, or Windows OCR)
 # ---------------------------------------------------------------------------
-def crop_key(text: str) -> str | None:
-    t = text.lower().replace("*", "").strip()
-    for key, spec in AB_CROPS.items():
-        if any(re.search(p, t) for p in spec["patterns"]):
-            return key
-    return None
-
-
 def text_words(page) -> list[dict]:
     return page.extract_words()
 
@@ -149,17 +125,17 @@ def _variant_image(page, bbox: tuple, variant: str):
 def ocr_words(page, pdf_name: str, pno: int, variant: str = "render") -> list[dict]:
     """Windows OCR of the page's table (its image, or the whole page for vector pages),
     cached per variant; words in PDF coordinates."""
-    AB_OCR_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    SPEC.ocr_cache_dir.mkdir(parents=True, exist_ok=True)
     if image_only(page):
         img = max(page.images, key=lambda im: im["width"] * im["height"])
         bbox = (img["x0"], img["top"], img["x1"], img["bottom"])
     else:
         bbox = (0, 0, page.width, page.height)
     stem = f"{Path(pdf_name).stem}_p{pno}_{variant}"
-    png, cache = AB_OCR_CACHE_DIR / f"{stem}.png", AB_OCR_CACHE_DIR / f"{stem}.json"
+    png, cache = SPEC.ocr_cache_dir / f"{stem}.png", SPEC.ocr_cache_dir / f"{stem}.json"
     if not cache.exists():
         _variant_image(page, bbox, variant).save(png)
-        script = AB_OCR_CACHE_DIR / "ocr.ps1"
+        script = SPEC.ocr_cache_dir / "ocr.ps1"
         script.write_text(OCR_SCRIPT, encoding="utf-8")
         subprocess.run(["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script),
                         "-ImagePath", str(png.resolve()), "-OutJson", str(cache.resolve())],
@@ -267,7 +243,7 @@ def parse_budget(words: list[dict], ocr: bool) -> dict:
         name = " ".join(w["text"] for w in ws if w["text"].lower().strip("*") in CROP_WORDS)
         grade = " ".join(w["text"] for w in ws if w["text"].lower().strip("*") not in CROP_WORDS)
         columns.append({"index": i, "header": " ".join(w["text"] for w in ws), "crop_name": name,
-                        "grade": grade, "crop_key": crop_key(name) if name else None,
+                        "grade": grade, "crop_name_variants": [name] if name else [],
                         "footnote": "*" in "".join(w["text"] for w in ws)})
 
     # Values: each word right of the labels goes to the nearest row (by y) and column (by right edge).
@@ -373,10 +349,9 @@ def merge_variants(tables: list[dict]) -> dict:
                      "candidates": [sorted({c for c in v if c != "NA"}, key=str) for v in votes]})
     columns = []
     for i, col in enumerate(primary["columns"]):
-        keys = [t["columns"][j]["crop_key"] for t, m in zip(tables, maps) for j, ii in m.items()
-                if ii == i and j < len(t["columns"]) and t["columns"][j]["crop_key"]]
-        best = max(set(keys), key=keys.count) if keys else None
-        columns.append({**col, "crop_key": best})
+        names = [n for t, m in zip(tables, maps) for j, ii in m.items()
+                 if ii == i and j < len(t["columns"]) for n in t["columns"][j]["crop_name_variants"]]
+        columns.append({**col, "crop_name_variants": names})
     return {**primary, "columns": columns, "rows": rows, "variants": len(tables)}
 
 
@@ -514,255 +489,36 @@ def parse_pdf(path: Path, year: int) -> dict:
     return doc
 
 
+
+
 # ---------------------------------------------------------------------------
-# Normalize + cross-check
+# Driver
 # ---------------------------------------------------------------------------
-def _grid_lookup(grid: dict, key: str) -> dict | None:
-    for label, zones in grid.items():
-        if crop_key(label) == key:
-            return zones
-    return None
-
-
-def normalize(doc: dict) -> list[dict]:
-    prices = {k: v["per_lb"] for k, v in doc["fert_prices"].items()}
-    records = []
-    for table in doc["budgets"]:
-        if "error" in table:
-            continue
-        zone = table["zone"]
-        rows = {r["key"]: r["values"] for r in table["rows"] if r["key"]}
-        cands = {r["key"]: r.get("candidates") for r in table["rows"] if r["key"]}
-        used_keys: set[str] = set()
-        for col in table["columns"]:
-            key = col["crop_key"]
-            if key is None or key in used_keys:
-                continue
-            used_keys.add(key)
-            i = col["index"]
-
-            def v(field: str):
-                vals = rows.get(field)
-                x = vals[i] if vals and i < len(vals) else None
-                return x if isinstance(x, (int, float)) else None
-
-            rec = {"year": doc["year"], "province": "AB", "zone": zone, "zone_display": AB_ZONES.get(zone),
-                   "crop_key": key, "display": AB_CROPS[key]["display"], "crop_header": col["header"],
-                   "grade": col["grade"], "source": {"file": doc["file"], "page": table["page"]},
-                   "ocr": table["ocr"], "notes": [], "checks": []}
-            y, p = v("yield"), v("price")
-            lb_yield = y is not None and y > 300
-            rec.update(yield_=y, yield_unit="lb/ac" if lb_yield else "bu/ac", price=p,
-                       price_unit="$/lb" if lb_yield else "$/bu")
-            for f in ("sales", "seed", "fertilizer", "chemical", "total_direct", "contribution", "break_even"):
-                rec[f] = v(f)
-            npks_raw = rows.get("npks", [None] * (i + 1))[i] if rows.get("npks") else None
-            rec["npks_blend"] = npks_raw
-            npks = [float(x) for x in npks_raw.split("-")] if isinstance(npks_raw, str) and NPKS_RE.match(npks_raw) else None
-            rec.update(n_lbs_ac=npks[0] if npks else None, p2o5_lbs_ac=npks[1] if npks else None,
-                       k2o_lbs_ac=npks[2] if npks else None, s_lbs_ac=npks[3] if npks else None)
-            present = [k for k in DIRECT_ITEMS if k in rows]
-            items = {k: v(k) for k in present}
-
-            seed_grid = (_grid_lookup(doc["seed_table"], key) or {}).get(zone) or []
-            chem_grid = (_grid_lookup(doc["chem_table"], key) or {}).get(zone) or []
-            t1_cost = seed_grid[-1] if len(seed_grid) >= 2 else None
-            rate = seed_grid[0] if len(seed_grid) >= 2 else None
-            unit = "lb/ac" if key in LB_SEEDED else "bu/ac"
-            rec["seeding_rate"] = rate
-            rec["seeding_rate_unit"] = unit if rate is not None else None
-            rec["seeding_rate_lbs_ac"] = (None if rate is None else
-                                          rate if unit == "lb/ac" else rate * AB_CROPS[key]["bu_weight"])
-            rec["chemical_table2"] = round(sum(chem_grid), 2) if chem_grid else None
-            fert_calc = (sum(a * prices.get(k, 0) for a, k in zip(npks, "NPKS")) if npks and len(prices) == 4
-                         else None)
-
-            if rec["ocr"]:
-                alts = {k: (cands.get(k) or [None] * (i + 1))[i] if cands.get(k) and i < len(cands[k]) else []
-                        for k in present}
-                repair_ocr(rec, items, t1_cost, fert_calc, alts)
-            y, p = rec["yield_"], rec["price"]
-            if y is not None:
-                lb_yield = y > 300
-                rec.update(yield_unit="lb/ac" if lb_yield else "bu/ac", price_unit="$/lb" if lb_yield else "$/bu")
-
-            def check(name: str, got, want, tol: float, info: bool = False) -> None:
-                entry = {"check": name, "ok": None if got is None or want is None else abs(got - want) <= tol}
-                if entry["ok"] is not None:
-                    entry.update(printed=got, expected=round(want, 4))
-                if info:
-                    entry["informational"] = True
-                rec["checks"].append(entry)
-
-            total_items = sum(x for x in items.values() if x is not None) if items else None
-            check("sales = yield x price", rec["sales"], None if None in (y, p) else y * p,
-                  max(0.51, 0.005 * (rec["sales"] or 0)))
-            check("sum of direct items = total", rec["total_direct"],
-                  total_items if all(x is not None for x in items.values()) else None, 0.06)
-            check("sales - total = contribution", rec["contribution"],
-                  None if None in (rec["sales"], rec["total_direct"]) else rec["sales"] - rec["total_direct"], 0.02)
-            # The guides cost the physical product blend and round up, so this is a sanity bound.
-            check("fertilizer ~ NPKS x published $/lb", rec["fertilizer"], fert_calc,
-                  max(1.5, 0.012 * (fert_calc or 0)))
-            check("seed vs Table 1 $/ac", rec["seed"], t1_cost, 0.015, info=True)
-            seed_c = rec["checks"][-1]
-            if seed_c["ok"] is False:
-                rec["notes"].append(f"budget seed ${rec['seed']:.2f} differs from Table 1 ${t1_cost:.2f} "
-                                    "(guide inconsistency; budget value kept)")
-            check("chemical vs Table 2 total", rec["chemical"], rec["chemical_table2"], 0.03, info=True)
-
-            failed = [c["check"] for c in rec["checks"] if c["ok"] is False and not c.get("informational")]
-            if failed:
-                rec["notes"].append("unverified: " + "; ".join(failed))
-            core = ("yield_", "price", "seed", "chemical")
-            if any(rec.get(f) is None for f in core) or npks is None:
-                rec["notes"].append("core field missing: " + ", ".join(
-                    [f.rstrip("_") for f in core if rec.get(f) is None] + (["npks"] if npks is None else [])))
-            rec["verified"] = not failed and not any(n.startswith("core field missing") for n in rec["notes"])
-            # Every year the budget prices red lentil seed with the green-lentil Table 1 cost
-            # (90 lb rate); use Table 1's red-lentil rate and cost. Checks above ran on the
-            # printed figure, which is kept in seed_printed.
-            rec["seed_printed"] = rec["seed"]
-            if key in SEED_FROM_TABLE1 and t1_cost is not None and rec["seed"] != t1_cost:
-                rec["notes"] = [n for n in rec["notes"] if not n.startswith("budget seed")]
-                rec["notes"].append(f"seed ${t1_cost:.2f} from Table 1 red lentils ({rate:g} lb/ac); budget "
-                                    f"printed ${rec['seed']:.2f} (green-lentil seed cost)")
-                rec["seed"] = t1_cost
-                rec["seed_source"] = "Table 1"
-            else:
-                rec["seed_source"] = "budget"
-            records.append(rec)
-    return records
-
-
-def repair_ocr(rec: dict, items: dict, t1_cost: float | None, fert_calc: float | None,
-               alts: dict | None = None) -> None:
-    """Fill or correct OCR'd values only from an independent source or a table identity."""
-    notes = rec["notes"]
-    sales, contrib, total = rec["sales"], rec["contribution"], rec["total_direct"]
-    t_alt = None if None in (sales, contrib) else round(sales - contrib, 2)
-    targets = [t for t in (total, t_alt) if t is not None]
-
-    def adds_up(vals: dict) -> bool:
-        return all(x is not None for x in vals.values()) and any(abs(sum(vals.values()) - t) <= 0.06
-                                                                  for t in targets)
-
-    if rec["seed"] is None and t1_cost is not None:
-        notes.append(f"OCR seed unread -> Table 1 ${t1_cost:.2f}")
-        rec["seed"] = items["seed"] = t1_cost
-    elif t1_cost is not None and abs(rec["seed"] - t1_cost) > 0.015 and not adds_up(items)             and adds_up({**items, "seed": t1_cost}):
-        notes.append(f"OCR seed {rec['seed']} -> Table 1 ${t1_cost:.2f} (table then adds up)")
-        rec["seed"] = items["seed"] = t1_cost
-    # A cell the OCR variants disagreed on: try their other readings against the total.
-    if targets and not adds_up(items) and alts:
-        for k, options in alts.items():
-            for alt in options or []:
-                if isinstance(alt, (int, float)) and alt != items.get(k) and adds_up({**items, k: alt}):
-                    notes.append(f"OCR {k} {items.get(k)} -> {alt} (other OCR reading; table then adds up)")
-                    items[k] = alt
-                    if k in rec:
-                        rec[k] = alt
-                    break
-            if adds_up(items):
-                break
-    known = [x for x in items.values() if x is not None]
-    missing = [k for k, x in items.items() if x is None]
-    candidates = [t for t in (total, t_alt) if t is not None]
-    if not missing and known:
-        match = next((t for t in candidates if abs(sum(known) - t) <= 0.06), None)
-        if match is not None and match != total:
-            notes.append(f"OCR total {total} -> {match:.2f} (sales - contribution)")
-            rec["total_direct"] = match
-    elif len(missing) == 1 and candidates:
-        t = t_alt if (total is None or (t_alt is not None and t_alt != total)) and t_alt is not None else total
-        fill = round(t - sum(known), 2)
-        if fill >= 0:
-            notes.append(f"OCR {missing[0]} unread -> {fill:.2f} (total - other items)")
-            items[missing[0]] = fill
-            if missing[0] in ("seed", "chemical", "fertilizer"):
-                rec[missing[0]] = fill
-            if rec["total_direct"] is None:
-                rec["total_direct"] = t
-    if rec["sales"] is None and None not in (rec["total_direct"], contrib):
-        rec["sales"] = round(rec["total_direct"] + contrib, 2)
-        notes.append("OCR sales unread -> total + contribution")
-    y, p, s = rec["yield_"], rec["price"], rec["sales"]
-    if s is not None:
-        if y is None and p:
-            rec["yield_"] = round(s / p, 2)
-            notes.append("OCR yield unread -> sales / price")
-        elif p is None and y:
-            rec["price"] = round(s / y, 2 if y < 300 else 4)
-            notes.append("OCR price unread -> sales / yield")
-        elif y and p and abs(y * p - s) > max(0.51, 0.005 * s):
-            p2, y2 = round(s / y, 2 if y < 300 else 2), round(s / p, 2)
-            if abs(p2 - p) / p <= abs(y2 - y) / y:
-                notes.append(f"OCR price {p} -> {p2} (sales / yield)")
-                rec["price"] = p2
-            else:
-                notes.append(f"OCR yield {y} -> {y2} (sales / price)")
-                rec["yield_"] = y2
-    if fert_calc is not None and (rec["fertilizer"] is None or
-                                  abs(rec["fertilizer"] - fert_calc) > max(1.5, 0.012 * fert_calc)):
-        notes.append(f"OCR fertilizer {rec['fertilizer']} -> NPKS x $/lb {fert_calc:.2f} (approximate)")
-        rec["fertilizer"] = round(fert_calc, 2)
-    if rec["chemical"] is None and rec.get("chemical_table2") is not None:
-        notes.append(f"OCR chemical unread -> Table 2 ${rec['chemical_table2']:.2f} (approximate)")
-        rec["chemical"] = rec["chemical_table2"]
-
-
-CSV_FIELDS = ["year", "province", "zone", "zone_display", "crop_key", "display", "grade", "yield_", "yield_unit",
-              "price", "price_unit", "sales", "seed", "seed_source", "seed_printed", "fertilizer", "npks_blend", "n_lbs_ac", "p2o5_lbs_ac",
-              "k2o_lbs_ac", "s_lbs_ac", "chemical", "chemical_table2", "total_direct", "contribution",
-              "break_even", "seeding_rate", "seeding_rate_unit", "seeding_rate_lbs_ac", "ocr", "verified", "notes"]
-
-
-def detect_pdfs() -> dict[int, Path]:
-    found = {}
-    for pdf in sorted(AB_INPUT_PDF_DIR.glob("*.pdf")):
-        m = PDF_YEAR_PATTERN.search(pdf.stem)
-        if m and int(m.group(1)) in YEARS:
-            found[int(m.group(1))] = pdf
-    return found
-
-
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--years", type=int, nargs="*")
     args = ap.parse_args(argv)
-    pdfs = detect_pdfs()
-    if not AB_INPUT_PDF_DIR.is_dir() or not pdfs:
-        print(f"No AB PDFs in {AB_INPUT_PDF_DIR}")
-        return 1
+    pdfs = source_pdfs(SPEC)
     if args.years:
         pdfs = {y: p for y, p in pdfs.items() if y in args.years}
-    print(f"AB input folder: {AB_INPUT_PDF_DIR}")
-    docs, records = [], []
+    if not pdfs:
+        print(f"No AB PDFs in {SPEC.input_dir}")
+        return 1
+    print(f"AB input folder: {SPEC.input_dir}")
+    docs = []
     for year, path in sorted(pdfs.items()):
         doc = parse_pdf(path, year)
-        recs = normalize(doc)
         docs.append(doc)
-        records += recs
-        n_ok = sum(r["verified"] for r in recs)
+        ocr = any(b.get("source", "").startswith("ocr") for b in doc["budgets"])
         fp = ", ".join(f"{k} ${v['per_lb']:.2f}" for k, v in sorted(doc["fert_prices"].items()))
-        print(f"  {year}  budgets={len(doc['budgets'])}  crop-zones={len(recs):3}  verified={n_ok:3}  "
-              f"ocr={'yes' if any(b.get('ocr') for b in doc['budgets']) else 'no ':3}  fert: {fp}"
+        print(f"  {year}  budgets={len(doc['budgets'])}  ocr={'yes' if ocr else 'no ':3}  fert: {fp}"
               + (f"  WARN {doc['warnings']}" if doc["warnings"] else ""))
-
-    AB_INTERMEDIATE_DIR.mkdir(parents=True, exist_ok=True)
-    AB_OUTPUT_JSON.parent.mkdir(parents=True, exist_ok=True)
+    SPEC.intermediate_dir.mkdir(parents=True, exist_ok=True)
     meta = {"parser_version": PARSER_VERSION, "generated_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-            "source_dir": str(AB_INPUT_PDF_DIR), "years": sorted(pdfs)}
-    AB_RAW_JSON.write_text(json.dumps({"meta": meta, "documents": docs}, indent=1, ensure_ascii=False), encoding="utf-8")
-    fert = {d["year"]: d["fert_prices"] for d in docs}
-    AB_OUTPUT_JSON.write_text(json.dumps({"meta": {**meta, "zones": AB_ZONES, "fert_prices": fert},
-                                          "records": records}, indent=1, ensure_ascii=False), encoding="utf-8")
-    with AB_OUTPUT_CSV.open("w", newline="", encoding="utf-8-sig") as fh:
-        w = csv.DictWriter(fh, fieldnames=CSV_FIELDS, extrasaction="ignore")
-        w.writeheader()
-        for r in records:
-            w.writerow({**r, "notes": "; ".join(r["notes"])})
-    print(f"  wrote {AB_RAW_JSON}\n  wrote {AB_OUTPUT_JSON}\n  wrote {AB_OUTPUT_CSV}")
+            "source_dir": str(SPEC.input_dir), "years": sorted(pdfs)}
+    SPEC.raw_json.write_text(json.dumps({"meta": meta, "documents": docs}, indent=1, ensure_ascii=False),
+                             encoding="utf-8")
+    print(f"  wrote {SPEC.raw_json}")
     return 0
 
 

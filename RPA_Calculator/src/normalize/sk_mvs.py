@@ -1,7 +1,7 @@
-"""Phase 1.3 - normalize raw guide tables into the Saskatchewan MVS database.
+"""Saskatchewan normalizer: raw guide tables -> the SK historical database (MVS).
 
-Reads output/sk/intermediate/raw_extracted_tables.json (Phase 1.2) and writes one
-record per MVS commodity and year to output/sk/mvs/ as JSON, Excel and CSV.
+Reads output/sk/intermediate/sk_raw_tables.json (src/sources/sk_extractor.py) and writes one
+record per crop_key and year to output/sk/mvs/sk_historical_2019_2026.{json,xlsx,csv}.
 
 Per record:
     revenue              target yield and farm price in bu/ac and $/bu, plus lb/ac
@@ -18,13 +18,16 @@ Per record:
     zone_detail          the per-zone values as printed, before blending
     notes                data-quality flags; nothing here halts the run
 
-Zone selection follows config.MVS_COMMODITY_ZONE_MAP. Blended commodities (Wheat,
-Rye) take the simple arithmetic mean of every printed numeric field across their
-zones; C, D, returns and break-evens are then derived from the blended values so
-the identities hold exactly on every record.
+Crops and source aliases come from docs/AGENT_RULES.json (provinces.SK.crops); soil zones from
+its region_averaging block [REGION-AVG-RULE], the same rule Alberta uses: general crops average
+every active zone (Brown, Dark Brown, Black) in which the guide publishes a budget, southern
+crops (durum, red lentils) Brown + Dark Brown only. Each record takes the simple arithmetic mean
+of every printed numeric field across those zones; C, D, returns and break-evens are then derived
+from the averaged values so the identities hold exactly on every record. Agronomy rules [SK-S-IMPLIED-ZERO],
+[SK-K-ZERO] and [SK-SEED-DERIVED] are applied here.
 
 Usage:
-    python src/normalizer.py
+    python -m src.normalize.sk_mvs
 """
 
 from __future__ import annotations
@@ -39,8 +42,30 @@ import pandas as pd
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-from config import (MVS_COMMODITY_ZONE_MAP, OUTPUT_CSV, OUTPUT_JSON, OUTPUT_XLSX,
-                    PULSE_LBS_PER_BU, RAW_TABLES_JSON, SOIL_ZONES, YEARS, is_pulse)
+from ..config import PULSE_LBS_PER_BU, YEARS, crop, province
+
+SPEC = province("SK")
+SOIL_ZONES = tuple(SPEC.regions.values())       # region display names as printed in the guides
+RAW_TABLES_JSON = SPEC.raw_json
+OUTPUT_JSON, OUTPUT_XLSX, OUTPUT_CSV = (SPEC.baseline_path(e) for e in ("json", "xlsx", "csv"))
+
+
+def _crop_rules() -> dict[str, dict]:
+    """Registry view used below: {crop_key: zones (display names), method, variety, ...}."""
+    out = {}
+    for key in SPEC.source_crops():
+        pc = SPEC.crop(key)
+        out[key] = {"zones": tuple(SPEC.regions[r] for r in pc.regions), "method": pc.method,
+                    "variety": pc.variety, "source_names": pc.source_aliases,
+                    "price_basis": crop(key).price_basis}
+    return out
+
+
+SK_CROPS = _crop_rules()
+
+
+def is_pulse(key: str) -> bool:
+    return crop(key).pulse
 
 NORMALIZER_VERSION = "2.0.0"
 
@@ -501,7 +526,7 @@ def derive(base: dict, commodity: str) -> tuple[dict[str, dict], list[str]]:
     s_lbs = base.get("s_lbs_ac")
     if s_lbs is None and base.get("fert_s") == 0:
         s_lbs = 0.0
-        notes.append("S rate not stated; budget carries $0 of S, so 0 lb S/ac")
+        notes.append("S rate not stated; budget carries $0 of S, so 0 lb S/ac [SK-S-IMPLIED-ZERO]")
     elif s_lbs is None:
         notes.append("S rate not stated but S cost is budgeted; lb S/ac left empty")
 
@@ -514,7 +539,9 @@ def derive(base: dict, commodity: str) -> tuple[dict[str, dict], list[str]]:
         if base.get(key) is None:
             notes.append(f"{key} missing from budget; counted as 0 in D")
 
-    ret = None if gross is None else gross - d
+    # C - D from the stored (rounded) C and D, so the identity holds exactly on every record even
+    # when a 3-zone average leaves thirds in C and D.
+    ret = None if gross is None else _r(gross) - _r(d)
     be_yield_bu = d / price_bu if price_bu else None
     be_price_bu = d / yield_bu if yield_bu else None
     be_yield_lb = d / price_lb if (pulse and price_lb) else None
@@ -569,8 +596,8 @@ def build_record(doc: dict, commodity: str, rule: dict) -> dict:
     notes: list[str] = []
 
     for z in zones:
-        if z not in sources:
-            notes.append(f"{z} zone budget not found for {commodity} in {doc['year']}")
+        if z not in sources:   # [REGION-AVG-RULE] average where published
+            notes.append(f"{commodity} not published in the {z} zone in {doc['year']}; averaged over {len(used)} zone(s)")
     zone_notes = {z: list(dict.fromkeys(src["notes"] + src["checks"])) for z, src in used.items()}
     shared = [n for n in next(iter(zone_notes.values()), []) if all(n in v for v in zone_notes.values())]
     notes += shared
@@ -598,6 +625,8 @@ def build_record(doc: dict, commodity: str, rule: dict) -> dict:
     record = {
         "year": doc["year"],
         "commodity": commodity,
+        "crop_key": commodity,
+        "trade_label": crop(commodity).trade_label,
         "variety": rule.get("variety"),
         "method": rule["method"],
         "soil_zones": zones,
@@ -637,7 +666,8 @@ def source_discrepancies(raw: dict) -> list[dict]:
 def flatten(record: dict) -> dict:
     row = {
         "Year": record["year"],
-        "Commodity": record["commodity"],
+        "Commodity": record["trade_label"],
+        "Crop Key": record["crop_key"],
         "Variety": record["variety"],
         "Zone Method": "Simple average" if record["method"] == "blend" else "Single zone",
         "Soil Zones": ", ".join(record["soil_zones"]),
@@ -655,7 +685,7 @@ def zone_rows(records: list[dict]) -> list[dict]:
     rows = []
     for rec in records:
         for zone, vals in rec["zone_detail"].items():
-            row = {"Year": rec["year"], "Commodity": rec["commodity"], "Soil Zone": zone,
+            row = {"Year": rec["year"], "Commodity": crop(rec["commodity"]).trade_label, "Soil Zone": zone,
                    "Used In": "average" if rec["method"] == "blend" else "direct"}
             for key, header, _ in RAW_FIELDS:
                 row[header] = vals.get(key)
@@ -700,7 +730,7 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     if not args.raw.exists():
-        print(f"Raw tables not found: {args.raw}\nRun: python src/pdf_parser.py")
+        print(f"Raw tables not found: {args.raw}\nRun: python -m src.sources.sk_extractor")
         return 1
     raw = json.loads(args.raw.read_text(encoding="utf-8"))
     docs = {d["year"]: d for d in raw["documents"]}
@@ -710,11 +740,12 @@ def main(argv: list[str] | None = None) -> int:
     for year in YEARS:
         if year not in docs:
             continue
-        for commodity, rule in MVS_COMMODITY_ZONE_MAP.items():
+        for commodity, rule in SK_CROPS.items():
             try:
                 records.append(build_record(docs[year], commodity, rule))
             except Exception as exc:  # flag, never halt the whole build
-                records.append({"year": year, "commodity": commodity, "variety": rule.get("variety"),
+                records.append({"year": year, "commodity": commodity, "crop_key": commodity,
+                                "trade_label": crop(commodity).trade_label, "variety": rule.get("variety"),
                                 "method": rule["method"], "soil_zones": list(rule["zones"]), "zones_used": [],
                                 "source": {"file": docs[year]["file"], "crop_names": [], "pages": [], "tables": []},
                                 "price_basis": rule["price_basis"], **{g: {} for g in OUT_GROUPS},
@@ -730,7 +761,8 @@ def main(argv: list[str] | None = None) -> int:
             "raw_parser_version": raw["meta"].get("parser_version"),
             "years": sorted(docs),
             "missing_years": missing_years,
-            "blend_rule": "simple arithmetic mean across the commodity's soil zones (equal weights)",
+            "blend_rule": "[REGION-AVG-RULE] simple arithmetic mean (equal weights) across the active soil "
+                          "zones where the crop is published; southern crops Brown + Dark Brown only",
             "direct_cash_inputs_rule": "D = seed (base + treatment) + fertilizer (N + P + K + S) "
                                        "+ plant protection (herbicides + insecticides + fungicides)",
             "units": {"direct_costs_per_ac": "$/ac", "revenue": "$/ac; yields bu/ac (+ lb/ac pulses)",
@@ -738,7 +770,7 @@ def main(argv: list[str] | None = None) -> int:
                       "pulse_lbs_per_bu": PULSE_LBS_PER_BU},
             "zone_map": {c: {"zones": list(r["zones"]), "method": r["method"],
                              "source_names": list(r["source_names"])}
-                         for c, r in MVS_COMMODITY_ZONE_MAP.items()},
+                         for c, r in SK_CROPS.items()},
         },
         "source_discrepancies": discrepancies,
         "records": records,
@@ -759,7 +791,7 @@ def main(argv: list[str] | None = None) -> int:
     write_excel(OUTPUT_XLSX, flat, zones, disc, fields)
 
     # Console summary
-    print(f"Normalized {len(records)} records ({len(docs)} years x {len(MVS_COMMODITY_ZONE_MAP)} commodities)")
+    print(f"Normalized {len(records)} records ({len(docs)} years x {len(SK_CROPS)} commodities)")
     incomplete = [r for r in records if len(r["zones_used"]) < len(r["soil_zones"])]
     gaps = [(r["year"], r["commodity"], k) for r in records
             for k, _, g, d, _ in OUT_FIELDS

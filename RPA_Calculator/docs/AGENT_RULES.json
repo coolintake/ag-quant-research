@@ -1,0 +1,265 @@
+{
+  "schema_version": "1.0.0",
+  "description": "Single source of truth for the RPA engine: crop registry, province specs (SK, AB, MB), active regions, fertilizer N-credit parameters, source overrides and conventions. Validated by src/config.py; explained rule by rule (IDs in brackets) in docs/METHODOLOGY.md.",
+
+  "conventions": {
+    "rule_id": "CONV",
+    "years": [2019, 2026],
+    "baseline_year": 2026,
+    "province_order": ["MB", "SK", "AB"],
+    "yield_rounding": "whole_native_half_up",
+    "pulse_price_basis": "c/lb",
+    "pulse_lbs_per_bu": 60,
+    "lb_per_unit": {"$/t": 2204.62, "$/sh.t": 2000.0},
+    "direct_cash_inputs": ["seed", "fertilizer", "chemical"]
+  },
+
+  "region_averaging": {
+    "rule_id": "REGION-AVG-RULE",
+    "rule": "Every province, every crop: the baseline is the simple (equal-weight) average of the crop's budgets across the active soil zones in which the guide publishes it. Southern crops average Brown and Dark Brown only, even where a Black budget is published.",
+    "general_regions": "active_regions",
+    "southern_crops": ["durum", "lentils_red"],
+    "southern_regions": ["brown", "dark_brown"],
+    "province_wide": "A province whose guide is province-wide (region_scope 'province_wide', e.g. MB) has a single region: every crop's baseline is that one budget and the southern restriction does not apply."
+  },
+
+  "nutrients": {
+    "N": {"label": "Nitrogen (N)", "rate_unit": "lb N/ac"},
+    "P": {"label": "Phosphate (P2O5)", "rate_unit": "lb P2O5/ac"},
+    "K": {"label": "Potash (K2O)", "rate_unit": "lb K2O/ac"},
+    "S": {"label": "Sulphur (S)", "rate_unit": "lb S/ac"}
+  },
+
+  "crops": {
+    "wheat_spring":     {"trade_label": "CWRS Wheat",       "price_basis": "$/bu", "bu_weight": 60, "seed_rate_unit": "bu/ac"},
+    "wheat_cps":        {"trade_label": "CPS Wheat",        "price_basis": "$/bu", "bu_weight": 60, "seed_rate_unit": "bu/ac"},
+    "durum":            {"trade_label": "Durum Wheat",      "price_basis": "$/bu", "bu_weight": 60, "seed_rate_unit": "bu/ac"},
+    "barley_feed":      {"trade_label": "Feed Barley",      "price_basis": "$/bu", "bu_weight": 48, "seed_rate_unit": "bu/ac"},
+    "barley_malt":      {"trade_label": "Malt Barley",      "price_basis": "$/bu", "bu_weight": 48, "seed_rate_unit": "bu/ac"},
+    "oats":             {"trade_label": "Oats",             "price_basis": "$/bu", "bu_weight": 34, "seed_rate_unit": "bu/ac"},
+    "peas_yellow":      {"trade_label": "Yellow Peas",      "price_basis": "c/lb", "bu_weight": 60, "seed_rate_unit": "bu/ac"},
+    "lentils_red":      {"trade_label": "Red Lentils",      "price_basis": "c/lb", "bu_weight": 60, "seed_rate_unit": "lb/ac"},
+    "chickpeas_kabuli": {"trade_label": "Kabuli Chickpeas", "price_basis": "c/lb", "bu_weight": 60, "seed_rate_unit": "lb/ac"},
+    "canola":           {"trade_label": "Canola",           "price_basis": "$/bu", "bu_weight": 50, "seed_rate_unit": "lb/ac"},
+    "soybeans":         {"trade_label": "Soybeans",         "price_basis": "$/bu", "bu_weight": 60, "seed_rate_unit": "lb/ac"},
+    "corn":             {"trade_label": "Corn",             "price_basis": "$/bu", "bu_weight": 56, "seed_rate_unit": "lb/ac"},
+    "flax":             {"trade_label": "Flax",             "price_basis": "$/bu", "bu_weight": 56, "seed_rate_unit": "lb/ac"},
+    "rye_hybrid_fall":  {"trade_label": "Fall Rye",         "price_basis": "$/bu", "bu_weight": 56, "seed_rate_unit": "lb/ac"}
+  },
+
+  "provinces": {
+    "SK": {
+      "name": "Saskatchewan",
+      "rule_id": "PROV-SK",
+      "source": {
+        "type": "sk_crop_planning_guide",
+        "title": "Saskatchewan Crop Planning Guide",
+        "input_dir": "RPA_SK_Input",
+        "file_glob": "RPA-SK-*.pdf"
+      },
+      "region_scope": "soil_zones",
+      "regions": {"brown": "Brown", "dark_brown": "Dark Brown", "black": "Black"},
+      "active_regions": ["brown", "dark_brown", "black"],
+      "fertilizer": {
+        "rule_id": "NCREDIT-SK",
+        "quote_unit": "$/t",
+        "products": {
+          "N": {"product": "Urea", "analysis": "46-0-0", "grade": 0.46, "n_content": 0.0},
+          "P": {"product": "MAP", "analysis": "11-52-0", "grade": 0.52, "n_content": 0.11},
+          "K": {"product": "Potash", "analysis": "0-0-60", "grade": 0.60, "n_content": 0.0},
+          "S": {"product": "Ammonium Sulphate (AS)", "analysis": "21-0-0-24S", "grade": 0.24, "n_content": 0.21}
+        },
+        "last_yr_quotes": "implied_from_guide",
+        "default_per_lb": {"K": 0.45}
+      },
+      "crops": {
+        "wheat_spring":    {"variety": "Hard Red Spring",
+                            "source_aliases": ["Spring Wheat", "Hard Red Spring Wheat", "Hard Red Spring"]},
+        "wheat_cps":       {"inherits": "wheat_spring", "start_year": 2026, "variety": "CPS / CNHR (high-yield class)",
+                            "source_aliases": ["CPS Wheat", "CNHR Wheat"]},
+        "canola":          {"source_aliases": ["Canola"]},
+        "durum":           {"variety": "Amber Durum",
+                            "source_aliases": ["Durum", "Amber Durum", "Durum Wheat"]},
+        "lentils_red":     {"variety": "Red Lentils",
+                            "source_aliases": ["Red Lentils", "Large Red Lentils"]},
+        "peas_yellow":     {"variety": "Yellow Peas",
+                            "source_aliases": ["Yellow Peas", "Edible Yellow Peas"]},
+        "barley_feed":     {"variety": "Feed Barley", "source_aliases": ["Feed Barley"]},
+        "barley_malt":     {"source_aliases": ["Malt Barley"]},
+        "oats":            {"source_aliases": ["Oats"]},
+        "flax":            {"source_aliases": ["Flax"]},
+        "rye_hybrid_fall": {"variety": "Hybrid Fall Rye",
+                            "source_aliases": ["Hybrid Fall Rye"]},
+        "soybeans":        {"source_aliases": ["Soybean", "Soybeans"]}
+      },
+      "agronomy_rules": [
+        {"id": "SK-S-IMPLIED-ZERO", "field": "s_lbs_ac",
+         "rule": "When the guide states no S rate and budgets $0 of S, record 0 lb S/ac."},
+        {"id": "SK-K-ZERO", "field": "k_lbs_ac",
+         "rule": "The SK guides budget no potash: K = 0 lb K2O/ac and $0/ac."},
+        {"id": "SK-SEED-DERIVED", "field": "seeding_rate_lbs_ac",
+         "rule": "Where only plant stand, TKW and emergence are given: lb/ac = plants/ft2 x 43,560 x TKW / 1,000 / 453.592 / emergence."}
+      ]
+    },
+
+    "AB": {
+      "name": "Alberta",
+      "rule_id": "PROV-AB",
+      "source": {
+        "type": "ab_agriprofit_cropping_alternatives",
+        "title": "Alberta AgriProfit$ Cropping Alternatives",
+        "input_dir": "RPA_AB_Input",
+        "file_glob": "RPA-AB-*.pdf"
+      },
+      "region_scope": "soil_zones",
+      "regions": {"black": "Black", "brown": "Brown", "dark_brown": "Dark Brown", "grey_wooded": "Grey-Wooded",
+                  "peace": "Peace Region", "irrigated": "Irrigated"},
+      "active_regions": ["brown", "dark_brown", "black"],
+      "fertilizer": {
+        "rule_id": "NCREDIT-AB",
+        "quote_unit": "$/t",
+        "products": {
+          "N": {"product": "Urea", "analysis": "46-0-0", "grade": 0.46, "n_content": 0.0},
+          "P": {"product": "MAP", "analysis": "11-52-0", "grade": 0.52, "n_content": 0.11},
+          "K": {"product": "Potash", "analysis": "0-0-60", "grade": 0.60, "n_content": 0.0},
+          "S": {"product": "Ammonium Sulphate (AS)", "analysis": "20.5-0-0-24", "grade": 0.24, "n_content": 0.205}
+        },
+        "last_yr_quotes": "guide_published"
+      },
+      "crops": {
+        "wheat_spring":     {"source_aliases": ["Spring Wheat"], "source_patterns": ["spring\\s+wheat", "^spring\\b"]},
+        "wheat_cps":        {"source_aliases": ["CPS Wheat"], "source_patterns": ["\\bcps\\b"]},
+        "durum":            {"source_aliases": ["Durum Wheat"], "source_patterns": ["durum"]},
+        "canola":           {"source_aliases": ["Argentine HT Canola", "Argentine Canola"],
+                             "source_patterns": ["argentine", "^canola"]},
+        "barley_feed":      {"source_aliases": ["Feed Barley"], "source_patterns": ["feed\\s+barley"]},
+        "barley_malt":      {"source_aliases": ["Malt Barley"], "source_patterns": ["malt"]},
+        "oats":             {"source_aliases": ["Milling Oats"], "source_patterns": ["milling\\s+oats", "^oats"]},
+        "peas_yellow":      {"source_aliases": ["Field Pea", "Yellow Peas"], "source_patterns": ["field\\s+pea", "yellow\\s+peas?\\b"]},
+        "lentils_red":      {"source_aliases": ["Red Lentil", "Red Lentils"],
+                             "source_patterns": ["red\\s+lentil"]}
+      },
+      "agronomy_rules": []
+    },
+
+    "MB": {
+      "name": "Manitoba",
+      "rule_id": "PROV-MB",
+      "source": {
+        "type": "mb_cop_workbook",
+        "title": "Manitoba Agriculture Crop Production Cost Guidelines (COP workbooks)",
+        "input_dir": "RPA_MB_Input",
+        "file_glob": "cop-crop-production-*.xls*"
+      },
+      "region_scope": "province_wide",
+      "regions": {"province_wide": "Province-Wide"},
+      "active_regions": ["province_wide"],
+      "fertilizer": {
+        "rule_id": "NCREDIT-MB",
+        "quote_unit": "$/t",
+        "products": {
+          "N": {"product": "Urea", "analysis": "46-0-0", "grade": 0.46, "n_content": 0.0},
+          "P": {"product": "MAP", "analysis": "11-52-0", "grade": 0.52, "n_content": 0.11},
+          "K": {"product": "Potash", "analysis": "0-0-60", "grade": 0.60, "n_content": 0.0},
+          "S": {"product": "Ammonium Sulphate (AS)", "analysis": "20.5-0-0-24", "grade": 0.24, "n_content": 0.205}
+        },
+        "n_blend": {
+          "NH3": {"product": "Anhydrous Ammonia (NH3)", "analysis": "82-0-0", "grade": 0.82}
+        },
+        "last_yr_quotes": "guide_published"
+      },
+      "crops": {
+        "wheat_spring":    {"variety": "Hard Red Spring", "source_aliases": ["Wheat - Hard Red Spring"]},
+        "wheat_cps":       {"variety": "Canada Prairie Spring", "source_aliases": ["Wheat - Prairie Spring"]},
+        "barley_feed":     {"source_aliases": ["Barley"]},
+        "oats":            {"source_aliases": ["Oats"]},
+        "rye_hybrid_fall": {"source_aliases": ["Hybrid Fall Rye", "Fall Rye"]},
+        "corn":            {"variety": "Grain Corn", "source_aliases": ["Corn"]},
+        "canola":          {"source_aliases": ["Canola"]},
+        "soybeans":        {"source_aliases": ["Soybeans"]},
+        "flax":            {"source_aliases": ["Flaxseed"]},
+        "peas_yellow":     {"variety": "Field Peas", "source_aliases": ["Peas"]}
+      },
+      "agronomy_rules": [
+        {"id": "MB-BARLEY-FEED", "field": "crop_key",
+         "rule": "MB publishes one barley budget, priced as feed barley; it maps to barley_feed. MB has no malt barley budget."},
+        {"id": "MB-PEAS-BU", "field": "price",
+         "rule": "MB budgets peas in bu/ac and $/bu: lb/ac = bu/ac x 60 and c/lb = $/bu / 60 x 100 (pulse_lbs_per_bu)."},
+        {"id": "MB-SEED-UNITS", "field": "seeding_rate_lbs_ac",
+         "rule": "Seed rates in bu are converted with the crop's bushel weight; rates in units (soybean, hybrid rye) or plants (corn) have no lb equivalent and are kept as printed."}
+      ]
+    }
+  },
+
+  "source_overrides": [
+    {"id": "OVR-AB-LENTIL-SEED", "province": "AB", "crop_key": "lentils_red", "field": "seed",
+     "use": "table1_cost",
+     "reason": "Every AB budget prices red lentil seed with the green-lentil Table 1 cost (90 lb/ac); Table 1's red-lentil rate and cost (60 lb/ac) are used. The printed value is kept as seed_printed."}
+  ],
+
+  "statcan_acreage": {
+    "rule_id": "PRAIRIE-WEIGHTED-RPA",
+    "table": "32-10-0359",
+    "title": "Estimated areas, yield, production, average farm price and total farm value of principal field crops",
+    "search_root": "../Workspace_CanadaSD/Data_Inputs",
+    "file": "32100359.csv",
+    "path": "../Workspace_CanadaSD/Data_Inputs/Planting_32100359-eng/32100359.csv",
+    "series": "Seeded area (acres)",
+    "window_years": 3,
+    "provinces": {"MB": "Manitoba", "SK": "Saskatchewan", "AB": "Alberta"},
+    "crops": {
+      "wheat_spring": "Wheat, Canada Western Red Spring (CWRS)",
+      "wheat_cps": "Wheat, Canada Prairie Spring Red (CPSR) and Canada Prairie Spring White (CPSW)",
+      "durum": "Wheat, durum",
+      "canola": "Canola (rapeseed)",
+      "barley_feed": "Barley",
+      "barley_malt": "Barley",
+      "oats": "Oats",
+      "peas_yellow": "Peas, dry",
+      "lentils_red": "Lentils",
+      "soybeans": "Soybeans",
+      "corn": "Corn for grain",
+      "flax": "Flaxseed",
+      "rye_hybrid_fall": "Rye, fall seeded in previous fall"
+    }
+  },
+
+  "prairie_acreage_weights": {
+    "rule_id": "PRAIRIE-WEIGHTED-RPA",
+    "generated": "2026-10-09",
+    "source": "StatCan Table 32-10-0359, Seeded area (acres) (32100359.csv)",
+    "years": [2024, 2025, 2026],
+    "method": "weight = province mean seeded acres over the window / sum of MB + SK + AB means",
+    "notes": ["lentils_red MB: no published seeded area for [2025, 2026] (suppressed or not surveyed)", "soybeans AB: no published seeded area for [2025, 2026] (suppressed or not surveyed)", "corn SK: no published seeded area for [2026] (suppressed or not surveyed)"],
+    "crops": {
+      "wheat_spring": {"weights": {"MB": 0.175946, "SK": 0.504747, "AB": 0.319307}, "mean_acres": {"MB": 2761533.3, "SK": 7922166.7, "AB": 5011633.3}},
+      "wheat_cps": {"weights": {"MB": 0.091109, "SK": 0.316644, "AB": 0.592247}, "mean_acres": {"MB": 117433.3, "SK": 408133.3, "AB": 763366.7}},
+      "durum": {"weights": {"MB": 0.008275, "SK": 0.797817, "AB": 0.193909}, "mean_acres": {"MB": 51466.7, "SK": 4962233.3, "AB": 1206066.7}},
+      "canola": {"weights": {"MB": 0.144377, "SK": 0.566397, "AB": 0.289226}, "mean_acres": {"MB": 3199833.3, "SK": 12553100.0, "AB": 6410133.3}},
+      "barley_feed": {"weights": {"MB": 0.049775, "SK": 0.383301, "AB": 0.566925}, "mean_acres": {"MB": 307600.0, "SK": 2368733.3, "AB": 3503500.0}},
+      "barley_malt": {"weights": {"MB": 0.049775, "SK": 0.383301, "AB": 0.566925}, "mean_acres": {"MB": 307600.0, "SK": 2368733.3, "AB": 3503500.0}},
+      "oats": {"weights": {"MB": 0.197435, "SK": 0.485887, "AB": 0.316678}, "mean_acres": {"MB": 493133.3, "SK": 1213600.0, "AB": 790966.7}},
+      "peas_yellow": {"weights": {"MB": 0.051581, "SK": 0.535271, "AB": 0.413148}, "mean_acres": {"MB": 165500.0, "SK": 1717433.3, "AB": 1325600.0}},
+      "lentils_red": {"weights": {"MB": 0.000721, "SK": 0.866442, "AB": 0.132837}, "mean_acres": {"MB": 3000.0, "SK": 3606333.3, "AB": 552900.0}},
+      "soybeans": {"weights": {"MB": 0.956129, "SK": 0.043126, "AB": 0.000745}, "mean_acres": {"MB": 1668700.0, "SK": 75266.7, "AB": 1300.0}},
+      "corn": {"weights": {"MB": 0.890818, "SK": 0.048915, "AB": 0.060267}, "mean_acres": {"MB": 605533.3, "SK": 33250.0, "AB": 40966.7}},
+      "flax": {"weights": {"MB": 0.063384, "SK": 0.836852, "AB": 0.099764}, "mean_acres": {"MB": 37633.3, "SK": 496866.7, "AB": 59233.3}},
+      "rye_hybrid_fall": {"weights": {"MB": 0.292734, "SK": 0.335016, "AB": 0.37225}, "mean_acres": {"MB": 102466.7, "SK": 117266.7, "AB": 130300.0}}
+    }
+  },
+
+  "outputs": {
+    "workbook_tabs": ["RPA_Prairie", "Control_Panel", "RPA_Summary_MB", "RPA_Summary_SK", "RPA_Summary_AB", "Agronomic_Rates",
+                      "Historical_Ratios"],
+    "historical_ratios": {
+      "rule_id": "HIST-RATIOS",
+      "provinces": ["MB", "SK", "AB"],
+      "bases": [
+        {"base": "wheat_spring", "numerators": ["canola"]},
+        {"base": "durum", "numerators": ["wheat_spring", "lentils_red"]},
+        {"base": "lentils_red", "numerators": ["peas_yellow"]},
+        {"base": "canola", "numerators": ["soybeans"]}
+      ]
+    }
+  }
+}
