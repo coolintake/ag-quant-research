@@ -139,6 +139,18 @@ are checked: exactly 3 bullets, word cap, no figures (other than "5-year average
 outperformers/laggards are ranked by absolute KMT change in weeks 1–10 and by YoY % afterwards,
 and a commodity is only named when its volume clears 100 KMT (`SUMMARY_MIN_BASE_KT`).
 
+**Week-over-week contrast.** `run()` also builds a full week N-1 snapshot (`payload["prior"]`).
+Each bullet reads momentum against it, not week N on its own:
+- **Deliveries:** whether a decline is flattening, rebounding, or extending, and whether gains are
+  building or fading (`DELIVERY_WOW_BAND_PCT`).
+- **Exports:** whether total terminal shipments are accelerating or slowing (`EXPORT_WOW_BAND_PCT`),
+  plus the commodity whose weekly loadings surged or eased most. A commodity counts when its
+  weekly exports move by at least `EXPORT_SURGE_PCT`, with `EXPORT_SURGE_MIN_KT` in either week.
+- **Logistics:** whether West Coast and eastern terminal space is relieving or tightening
+  (`UTIL_SHIFT_PTS` utilization points).
+
+The LLM path gets the same N-1 data and instructions.
+
 **Run.**
 ```
 python generate_weekly_pulse.py                 # full pipeline, stage draft to Ghost

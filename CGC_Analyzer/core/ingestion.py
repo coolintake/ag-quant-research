@@ -251,6 +251,9 @@ class CGCDownloader:
         cache_path = self.cache_dir / "combined_gsw.parquet"
         if cache_path.exists() and not force_refresh:
             cached = pd.read_parquet(cache_path)
+            # Purge blank rows (crop_year 'nan') cached before standardize_and_clean
+            # dropped them; they'd otherwise survive every incremental refresh.
+            cached = cached[cached["grain_week"].notna()].astype({"grain_week": int})
             cached = self._catch_up_rollover(cached)
             try:
                 current_df = self.parse_year(self.current_year)

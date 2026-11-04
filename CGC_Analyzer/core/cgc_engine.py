@@ -457,8 +457,14 @@ def standardize_and_clean(raw_df: pd.DataFrame, year_label: str) -> pd.DataFrame
     cleaning -> crop_year normalization. Single entry point ingestion.py
     should call for every raw file it reads.
     """
+    # The canada.ca CSV (from week 12 of 2026-27) ends with a ',,,,,,,,,'
+    # line. Left in, it becomes a crop_year 'nan' row that sorts after every
+    # real season, so "latest crop year" resolves to 'nan' and reports crash.
+    raw_df = raw_df.dropna(how="all")
     fixed = detect_and_fix_column_order(raw_df, year_label=year_label)
     cleaned = clean_types(fixed)
+    cleaned = cleaned[cleaned["grain_week"].notna()].copy()
+    cleaned["grain_week"] = cleaned["grain_week"].astype(int)
     if cleaned["crop_year"].eq("").all() or cleaned["crop_year"].isna().all():
         cleaned["crop_year"] = year_label
     cleaned["crop_year"] = cleaned["crop_year"].map(normalize_crop_year)

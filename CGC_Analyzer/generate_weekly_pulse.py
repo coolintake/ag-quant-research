@@ -668,6 +668,12 @@ EXPORT_PACE_BAND_PCT: float = 10.0      # total YTD exports vs LY: strong / soft
 CORRIDOR_IMBALANCE_PTS: float = 15.0    # West - East utilization gap = imbalance
 TIGHTENING_UTIL_PCT: float = 60.0       # West Coast storage "tightening" from here
 
+# Week-over-week (week N vs N-1) momentum bands for the Summary.
+EXPORT_WOW_BAND_PCT: float = 15.0       # total terminal shipments: accelerating / slowing
+EXPORT_SURGE_PCT: float = 25.0          # one commodity's weekly exports: surge / slowdown
+EXPORT_SURGE_MIN_KT: float = 50.0       # ...only when either week moved at least this much
+UTIL_SHIFT_PTS: float = 2.0             # storage utilization change: tightening / easing
+
 # Prose names: headline (title case) and in-sentence (lower case) forms.
 NARRATIVE_NAMES: dict[str, tuple[str, str]] = {
     "Wheat (excl. Durum)": ("Wheat", "non-durum wheat"),
@@ -738,6 +744,20 @@ def _fit(*clauses: str) -> str:
     return text
 
 
+def _wow_pct(cur: Optional[float], prev: Optional[float]) -> Optional[float]:
+    """Week-over-week % change, None when either week is missing or zero."""
+    if cur is None or not prev:
+        return None
+    return (cur - prev) / prev * 100.0
+
+
+def _direction(change: Optional[float], band: float) -> Optional[str]:
+    """'up' / 'down' / 'flat' against a +/- band, None without a comparison."""
+    if change is None:
+        return None
+    return "up" if change >= band else "down" if change <= -band else "flat"
+
+
 def _ranked_movers(commodities: list[dict], early: bool, pct_key: str,
                    cur_key: str, ly_key: str) -> list[dict]:
     """Commodities eligible to be named, sorted ascending by the comparison
@@ -775,24 +795,42 @@ class CommentaryWriter:
     # no-delivery-commentary rule holds.
     def _write_rule_based(self, payload: dict) -> dict:
         macro, commodities = payload["macro"], payload["commodities"]
+        prior = payload.get("prior") or {}
+        prior_macro, prior_comms = prior.get("macro") or {}, prior.get("commodities") or []
         week = macro.get("week_number")
         early = week is not None and week <= EARLY_SEASON_MAX_WEEK
         bullets = [
-            self._deliveries_bullet(macro),
-            self._exports_bullet(commodities, early),
-            self._logistics_bullet(macro, commodities, early),
+            self._deliveries_bullet(macro, prior_macro),
+            self._exports_bullet(macro, commodities, prior_macro, prior_comms, early),
+            self._logistics_bullet(macro, commodities, prior_macro, early),
         ]
         return {"summary": _check_bullets(bullets)}
 
     @staticmethod
-    def _deliveries_bullet(macro: dict) -> str:
-        wow = macro.get("deliveries_wow_pct")
-        if wow is not None and wow >= DELIVERY_WOW_BAND_PCT:
-            head, intake = "Farm Deliveries Accelerating", "Elevator intake surged this week, signalling robust producer selling"
-        elif wow is not None and wow <= -DELIVERY_WOW_BAND_PCT:
-            head, intake = "Farm Deliveries Slowing", "Elevator intake cooled off this week, pointing to a producer selling pause"
-        else:
-            head, intake = "Farm Deliveries Steady", "Elevator intake held a steady pace this week"
+    def _deliveries_bullet(macro: dict, prior_macro: dict) -> str:
+        """This week's intake direction (N vs N-1) read against last week's
+        (N-1 vs N-2), so a slide that is flattening or reversing is called
+        out rather than described in isolation."""
+        wow, prev_wow = macro.get("deliveries_wow_pct"), prior_macro.get("deliveries_wow_pct")
+        now = _direction(wow, DELIVERY_WOW_BAND_PCT)
+        last = _direction(prev_wow, DELIVERY_WOW_BAND_PCT)
+        # Two moves the same way: is the momentum building or fading?
+        if now == last and now in ("up", "down"):
+            last = "same_building" if abs(wow) >= abs(prev_wow) else "same_fading"
+        phrases = {
+            ("up", "down"): ("Farm Deliveries Rebounding", "Elevator intake rebounded after last week's pullback"),
+            ("up", "same_building"): ("Farm Deliveries Accelerating", "Elevator intake extended last week's gains, signalling robust producer selling"),
+            ("up", "same_fading"): ("Farm Deliveries Rising", "Elevator intake rose again, though gains are moderating from last week"),
+            ("up", None): ("Farm Deliveries Accelerating", "Elevator intake surged this week, signalling robust producer selling"),
+            ("down", "same_building"): ("Farm Deliveries Slowing", "Elevator intake declined for a second straight week, pointing to a producer selling pause"),
+            ("down", "same_fading"): ("Farm Deliveries Easing", "Elevator intake slipped again, though the decline moderated from last week"),
+            ("down", "up"): ("Farm Deliveries Cooling", "Elevator intake pulled back after last week's surge"),
+            ("down", None): ("Farm Deliveries Slowing", "Elevator intake cooled off this week, pointing to a producer selling pause"),
+            ("flat", "down"): ("Farm Deliveries Stabilizing", "Elevator intake levelled out after last week's decline"),
+            ("flat", "up"): ("Farm Deliveries Levelling Off", "Elevator intake held last week's higher pace"),
+            ("flat", None): ("Farm Deliveries Steady", "Elevator intake held a steady pace this week"),
+        }
+        head, intake = phrases.get((now, last)) or phrases.get((now, None)) or phrases[("flat", None)]
 
         vs5 = macro.get("deliveries_vs_5yr_pct")
         if vs5 is None:
@@ -805,58 +843,90 @@ class CommentaryWriter:
             pace = "tracking slightly behind"
         else:
             pace = "lagging well behind"
-        return f"{head}: {intake}, while cumulative crop-year pace is {pace} the 5-year average."
+        return _fit(f"{head}: {intake}", f", while crop-year pace is {pace} the 5-year average") + "."
 
     @staticmethod
-    def _exports_bullet(commodities: list[dict], early: bool) -> str:
-        movers = [m for m in commodities if m.get("weekly_exports_kt")]
-        if not movers:
-            return "Export Flow Quiet: Terminal export activity was minimal this week, with no single commodity driving outbound volume."
-        driver = max(movers, key=lambda m: m["weekly_exports_kt"])
-        d_head, d_prose = _names(driver)
+    def _exports_bullet(macro: dict, commodities: list[dict], prior_macro: dict,
+                        prior_comms: list[dict], early: bool) -> str:
+        """Total terminal shipments N vs N-1, the commodity whose weekly
+        exports accelerated (or slowed) most, then the YTD tone vs last year."""
+        total = _direction(_wow_pct(macro.get("terminal_outflow_total_kt"),
+                                    prior_macro.get("terminal_outflow_total_kt")), EXPORT_WOW_BAND_PCT)
 
-        cur = sum(m.get("ytd_exports_kt") or 0.0 for m in commodities)
-        ly = sum(m.get("ly_ytd_exports_kt") or 0.0 for m in commodities)
-        change = (cur - ly) / ly * 100.0 if ly else 0.0
-        tone = ("remains strong" if change >= EXPORT_PACE_BAND_PCT
-                else "is soft" if change <= -EXPORT_PACE_BAND_PCT else "is steady")
+        prev_by_name = {m["display_name"]: m.get("weekly_exports_kt") for m in prior_comms}
+        shifts = []
+        for m in commodities:
+            cur, prev = m.get("weekly_exports_kt"), prev_by_name.get(m["display_name"])
+            if cur is None or prev is None or max(cur, prev) < EXPORT_SURGE_MIN_KT:
+                continue
+            pct = _wow_pct(cur, prev)
+            if pct is not None and abs(pct) >= EXPORT_SURGE_PCT:
+                shifts.append((cur - prev, m))
+        surge = max(shifts, key=lambda x: x[0])[1] if shifts and max(shifts, key=lambda x: x[0])[0] > 0 else None
+        slump = min(shifts, key=lambda x: x[0])[1] if shifts and min(shifts, key=lambda x: x[0])[0] < 0 else None
 
-        ranked = _ranked_movers(commodities, early, "exports_yoy_pct", "ytd_exports_kt", "ly_ytd_exports_kt")
-        ahead = [m for m in ranked if m["ytd_exports_kt"] > m["ly_ytd_exports_kt"]]
-        behind = [m for m in ranked if m["ytd_exports_kt"] < m["ly_ytd_exports_kt"]]
-        lead = ahead[-1] if ahead else None
-        lag = behind[0] if behind else None
+        if surge is not None:
+            name = _names(surge)[0]
+            head = f"{name[:-1] if surge['display_name'] in PLURAL_NAMES else name} Exports Accelerating"
+        else:
+            head = {"up": "Export Flow Accelerating", "down": "Export Flow Slowing"}.get(total, "Export Flow Steady")
+        base = {"up": "Terminal shipments picked up week on week",
+                "down": "Terminal shipments slowed week on week",
+                "flat": "Terminal shipments held steady week on week"}.get(
+                    total, "Terminal export activity continued")
 
-        driver_clause = f", led by {d_prose} movement"
-        if lead is driver:
-            driver_clause += " running well ahead of last year"
-        lead_clause = (f"; {_names(lead)[1]} {_verb(lead, 'shows', 'show')} leading export momentum"
-                       if lead is not None and lead is not driver else "")
-        lag_clause = (f", while {_names(lag)[1]} {_verb(lag, 'continues', 'continue')} to lag behind"
-                      if lag is not None and lag is not driver else "")
-        return _fit(f"{d_head} Driving Outbound Flow: Terminal export activity {tone}",
-                    driver_clause, lead_clause, lag_clause) + "."
+        if surge is None:
+            surge_clause = ""
+        elif total == "up":
+            surge_clause = f", led by a surge in {_attributive(surge)} loadings"
+        else:
+            surge_clause = f", with {_attributive(surge)} loadings surging"
+            base = base.replace(" week on week", " overall")
+        slump_clause = f", while {_attributive(slump)} movement eased" if slump is not None else ""
+
+        cur_ytd = sum(m.get("ytd_exports_kt") or 0.0 for m in commodities)
+        ly_ytd = sum(m.get("ly_ytd_exports_kt") or 0.0 for m in commodities)
+        ytd = _direction(_wow_pct(cur_ytd, ly_ytd), EXPORT_PACE_BAND_PCT)
+        ytd_clause = {"up": "; YTD pace stays strong versus last year",
+                      "down": "; YTD pace remains soft versus last year",
+                      "flat": "; YTD pace is tracking last year"}.get(ytd, "")
+        return _fit(f"{head}: {base}", surge_clause, slump_clause, ytd_clause) + "."
 
     @staticmethod
-    def _logistics_bullet(macro: dict, commodities: list[dict], early: bool) -> str:
+    def _logistics_bullet(macro: dict, commodities: list[dict], prior_macro: dict, early: bool) -> str:
+        """Terminal space shift N vs N-1 by corridor (relieving vs tightening),
+        anchored on where West Coast utilization now sits."""
         west, east = macro.get("west_coast_util_pct"), macro.get("east_interior_util_pct")
         if west is None or east is None:
             return "Pipeline Visibility Limited: Terminal capacity data is unavailable this week, so corridor fluidity cannot be assessed."
 
-        if west >= RULE_THRESHOLDS["high_utilization_pct"]:
-            head, state = "West Coast Congestion Risk", "West Coast terminal space is close to capacity, raising congestion risk"
+        def shift(now, prev):
+            return _direction(None if prev is None else now - prev, UTIL_SHIFT_PTS)
+
+        w_move = shift(west, prior_macro.get("west_coast_util_pct"))
+        e_move = shift(east, prior_macro.get("east_interior_util_pct"))
+        high = west >= RULE_THRESHOLDS["high_utilization_pct"]
+
+        if w_move == "up":
+            head = "West Coast Congestion Building" if high else "West Coast Space Tightening"
+            state = "West Coast terminal space tightened week on week"
+        elif w_move == "down":
+            head = "West Coast Space Relieving"
+            state = "West Coast terminal space eased week on week"
+        elif high:
+            head, state = "West Coast Congestion Risk", "West Coast terminals remain close to capacity"
         elif west >= TIGHTENING_UTIL_PCT:
-            head, state = "West Coast Space Tightening", "Storage capacity is tightening at West Coast terminals"
+            head, state = "West Coast Space Tight", "West Coast terminal space held tight week on week"
         else:
             head, state = "Pipeline Fluid", "West Coast terminals retain ample storage space"
+        if w_move in ("up", "down"):
+            state += (", with storage still near capacity" if high
+                      else ", leaving ample room" if west < TIGHTENING_UTIL_PCT else "")
 
-        gap = west - east
-        if gap >= CORRIDOR_IMBALANCE_PTS:
-            corridor = ", maintaining a clear space imbalance over eastern corridors"
-        elif gap <= -CORRIDOR_IMBALANCE_PTS:
-            corridor = ", while eastern corridors carry the tighter space position"
-        else:
-            corridor = ", with space broadly balanced across corridors"
+        also = " also" if e_move == w_move and e_move in ("up", "down") else ""
+        east_clause = {"up": f"; eastern corridors{also} tightened",
+                       "down": f"; eastern corridors{also} gained space",
+                       "flat": "; eastern corridors held steady"}.get(e_move, "")
 
         stock_clause = ""
         ranked = _ranked_movers(commodities, early, "stocks_yoy_pct", "stocks_kt", "stocks_ly_kt")
@@ -867,7 +937,7 @@ class CommentaryWriter:
             building = mover["stocks_kt"] > mover["stocks_ly_kt"] if early else mover["stocks_yoy_pct"] > 0
             stock_clause = (f"; {_attributive(mover)} stocks are "
                             f"{'building above' if building else 'drawing below'} last year")
-        return _fit(f"{head}: {state}", corridor, stock_clause) + "."
+        return _fit(f"{head}: {state}", east_clause, stock_clause) + "."
 
     # -- optional LLM path (Anthropic Messages API) -----------------------
     def _write_llm(self, payload: dict) -> dict:
@@ -888,6 +958,11 @@ class CommentaryWriter:
             f"Crop-year week {week}: in weeks 1-{EARLY_SEASON_MAX_WEEK} judge commodity "
             "outperformers/laggards by absolute volume change vs last year, not % change. Never "
             f"name a commodity as a mover when either year's volume is under {SUMMARY_MIN_BASE_KT:.0f} KMT.\n"
+            "WEEK-OVER-WEEK: payload.prior holds the same metrics for the previous grain week. "
+            "Contrast this week against it rather than describing this week in isolation: is a "
+            "delivery decline flattening, reversing or extending; are terminal exports accelerating "
+            "or slowing, and which commodity's weekly exports surged or eased most; is West Coast "
+            "and eastern terminal space relieving or tightening. Keep it directional -- no numbers.\n"
             "Base every judgement on the payload; do not invent facts.\n"
             "Respond ONLY with JSON: {\"summary\": [str, str, str]}\n\n"
             f"PAYLOAD:\n{json.dumps(payload, default=str)}"
@@ -1160,6 +1235,15 @@ def run(week: Optional[int] = None, use_llm: bool = USE_LLM_DEFAULT,
 
     rules = RulesEngine()
     payload = rules.build_payload(macro, commodities)
+
+    # Week N-1 snapshot so the Summary can contrast momentum week on week.
+    prior_week = engine._prior_week(macro["week_number"])
+    if prior_week is not None:
+        payload["prior"] = {
+            "week_number": prior_week,
+            "macro": engine.macro_snapshot(week=prior_week),
+            "commodities": [m.to_dict() for m in engine.compute_all(week=prior_week)],
+        }
 
     commentary = CommentaryWriter(use_llm=use_llm).write(payload)
     payload.update(commentary)
