@@ -8,28 +8,32 @@ This repository consolidates analytical frameworks, automated data ingestion pip
 
 ## Directory Overview
 
-* **CGC_Analyzer/**
-  * **Description:** Continuous tracking and analytics platform for Canadian Grain Commission (CGC) bulk grain logistics and vessel movement.
-  * **Key Components:**
-    * pp.py: Streamlit dashboard entry point optimized for iFrame deployment.
-    * ingestion.py & cgc_engine.py: Dynamic ETL and analytical calculation engine for grain handling statistics, capacity utilization, and seasonal pacing.
-    * CGC_Capacity.xlsb: Physical terminal capacity benchmark dataset.
+### Market Intelligence & Logistics
 
-* **CFTC_Analyzer/**
-  * **Description:** Quantitative tracking of CFTC Commitments of Traders (COT) reports.
-  * **Key Components:** Evaluates institutional positioning, net speculative length, and money manager flow shifts across agricultural futures and options contracts.
+* **CGC_Analyzer/** – Turns Canadian Grain Commission weekly statistics into a Streamlit dashboard, a weekly grain handling report and a monthly export workbook.
+* **CFTC_Analyzer/** – Analyzes CFTC disaggregated Commitments of Traders reports from 2010 onward to track positioning in agricultural futures.
+* **CIMTD_Analyzer/** – Builds commodity export and import workbooks from Canadian International Merchandise Trade data stored in `CIMTD/`.
 
-* **Corn Volatility/**
-  * **Description:** Black-76 option pricing and volatility surface engine for CBOT Corn futures.
-  * **Key Components:** Historical volatility modeling, implied volatility smile/skew calculation, and automated harvesting scripts for options surface visualization.
+### Canadian Supply, Demand & Pricing
 
-* **Canola Cost of Carry/**
-  * **Description:** Storage, interest, and Variable Storage Rate (VSR) modeling for ICE Canola futures.
-  * **Key Components:** Cost-of-carry matrix evaluation and calendar spread arbitrage models across crop-year transition periods.
+* **Workspace_CanadaSD/** – Builds Canadian supply and demand balance sheets for grains, oilseeds, pulses, vegetable oils and protein meals from StatCan and CIMT data.
+* **Canada_Crop_Prices/** – Stores Western Canadian cash grain prices in a local DuckDB database and calculates provincial averages for pre-planting price windows.
+* **Matrix_FOB_Prices/** – Excel-based FOB pricing calculator, refreshed by batch launchers and Python scripts, that adds Hammersmith world market data.
 
-* **CIMTD_Analyzer/**
-  * **Description:** International merchandise trade data analytics.
-  * **Key Components:** Historical trade balance pivoting and macro-level export/import flow analysis.
+### Crop Economics & Acreage
+
+* **RPA_Calculator/** – Calculates Prairie crop returns over direct cash inputs from Alberta, Saskatchewan and Manitoba budget guides.
+* **Canada_Planting_Model/** – Compares relative crop profitability with StatCan seeded acres to evaluate acreage signals and forecasts.
+
+### Derivatives & Spreads
+
+* **Corn Volatility/** – Builds a Black-76 implied volatility surface for CBOT corn options and checks it for arbitrage.
+* **Canola Cost of Carry/** – Models cost of carry and Variable Storage Rate behavior for ICE canola futures using live interest rates and broker data.
+* **Chart_Spreads/** – Produces seasonal charts of grain and oilseed futures calendar spreads from Barchart history.
+
+### Shared Resources
+
+* **Design/** – Holds the house style and language guides used for tables, charts and reports.
 
 ---
 
@@ -37,4 +41,4 @@ This repository consolidates analytical frameworks, automated data ingestion pip
 
 * **Language & Core Libraries:** Python 3.10+ (Pandas, NumPy, Streamlit, Plotly, PyArrow/Parquet)
 * **Path Standardization:** File system accesses utilize dynamic resolution (Path(__file__).resolve().parent) to maintain platform independence between local environments and cloud runtimes.
-* **Streamlit Configuration:** App-level .streamlit/config.toml overrides CORS and XSRF restrictions to support seamless iFrame integration on external CMS platforms (*Chilmeran Research*).
+* **Streamlit Configuration:** Repository-root .streamlit/config.toml overrides CORS and XSRF restrictions to support seamless iFrame integration on external CMS platforms (*Chilmeran Research*).
